@@ -139,14 +139,45 @@
   /* ---------- Quest cards ---------- */
   .kid-card{position:relative; overflow:hidden;}
   .kid-top{display:flex; align-items:center; gap:12px;}
+  .avatar-wrap{flex:0 0 auto; display:flex; flex-direction:column; align-items:center; gap:5px;}
   .avatar{
     width:74px; height:74px; border-radius:22px; flex:0 0 auto; border:none; padding:4px;
-    background:linear-gradient(135deg,#fff2d8,#ffe3ee);
+    background:linear-gradient(135deg,#fff4dd,#ffe3ee);
     box-shadow:0 4px 12px rgba(200,160,200,.25);
     transition:transform .15s ease;
   }
   .avatar:active{transform:scale(.9) rotate(-4deg);}
-  .avatar svg{width:100%; height:100%; display:block;}
+  .avatar svg{width:100%; height:100%; display:block; animation:avatarBob 3.6s ease-in-out infinite;}
+  @keyframes avatarBob{0%,100%{transform:translateY(0) rotate(0);}50%{transform:translateY(-2.4px) rotate(-1.2deg);}}
+  .avatar-name{font-size:10.5px; font-weight:800; color:var(--ink-soft); letter-spacing:-.3px; white-space:nowrap;}
+
+  /* ---------- 캐릭터 고르기 ---------- */
+  .avatar-pop{
+    position:absolute; inset:0; z-index:6; display:none;
+    flex-direction:column; align-items:center; justify-content:center; gap:9px;
+    background:rgba(255,255,255,.95); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+    padding:14px 12px;
+  }
+  .avatar-pop.show{display:flex; animation:fadePop .18s ease;}
+  .avatar-pop .pop-title{font-size:12.5px; font-weight:800; color:#8a5cd6;}
+  .avatar-pop .pop-grid{display:grid; grid-template-columns:repeat(5,1fr); gap:6px; width:100%;}
+  .pop-item{
+    border:2px solid #f1edf9; background:#fdfcff; border-radius:14px; padding:5px 2px 4px;
+    display:flex; flex-direction:column; align-items:center; gap:2px;
+    transition:transform .12s ease, border-color .15s ease, background .15s ease;
+  }
+  .pop-item.sel{border-color:#ffa8c6; background:#fff5f9; box-shadow:0 3px 10px rgba(255,140,180,.25);}
+  .pop-item:active{transform:scale(.9);}
+  .pop-item .pic{width:100%; aspect-ratio:1/1; display:block;}
+  .pop-item .pic svg{width:100%; height:100%; display:block; animation:avatarBob 3.6s ease-in-out infinite;}
+  .pop-item .pname{font-size:9px; font-weight:800; color:var(--ink-soft); letter-spacing:-.4px; white-space:nowrap;}
+  .pop-close{
+    position:absolute; top:7px; right:9px; border:none; background:transparent;
+    color:#c1bbd3; font-size:15px; font-weight:800; padding:4px 6px;
+  }
+  @media (prefers-reduced-motion:reduce){
+    .avatar svg,.pop-item .pic svg{animation:none;}
+  }
   .kid-id{min-width:0; flex:1;}
   .kid-id .name-row{display:flex; align-items:center; gap:7px;}
   .kid-id .name{font-size:18px; font-weight:800;}
@@ -525,49 +556,117 @@ const Sync = {
   }
 };
 
-/* ---------- 귀여운 캐릭터 SVG (저작권 걱정 없는 오리지널 몬스터) ---------- */
+/* ---------- 치이카와 친구들 캐릭터 SVG ----------
+   동그란 얼굴 + 동글동글 귀 + 볼터치의 치이카와 스타일 인라인 일러스트.
+   배열 순서(0·1·2…)가 그대로 저장되는 avatar 값이라, 예전에 저장된
+   0(불꽃이)·1(번개이)·2(방울이)도 아래 새 친구로 자연스럽게 이어집니다.
+     0 치이카와 · 1 하치와레 · 2 우사기 · 3 모몽가 · 4 쿠리만쥬          */
 const AVATARS = [
-  { name:"불꽃이", svg:`
+  { key:"chiikawa", name:"치이카와", svg:`
     <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-      <ellipse cx="50" cy="58" rx="34" ry="32" fill="#ffb057"/>
-      <ellipse cx="50" cy="64" rx="26" ry="24" fill="#ffd9a8"/>
-      <path d="M50 6 C60 18 58 24 50 32 C42 24 40 18 50 6 Z" fill="#ff8a4c"/>
-      <path d="M20 34 C14 42 16 50 24 52 C26 44 24 38 20 34 Z" fill="#ff8a4c"/>
-      <path d="M80 34 C86 42 84 50 76 52 C74 44 76 38 80 34 Z" fill="#ff8a4c"/>
-      <circle cx="38" cy="54" r="8" fill="#fff"/><circle cx="62" cy="54" r="8" fill="#fff"/>
-      <circle cx="40" cy="55" r="4" fill="#4a3020"/><circle cx="60" cy="55" r="4" fill="#4a3020"/>
-      <circle cx="41.5" cy="53.5" r="1.4" fill="#fff"/><circle cx="61.5" cy="53.5" r="1.4" fill="#fff"/>
-      <circle cx="30" cy="66" r="4" fill="#ff9e9e" opacity=".7"/><circle cx="70" cy="66" r="4" fill="#ff9e9e" opacity=".7"/>
-      <path d="M44 68 Q50 73 56 68" stroke="#4a3020" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-      <path d="M64 80 Q72 74 78 80 Q74 88 64 84 Z" fill="#ff8a4c"/>
+      <circle cx="28" cy="34" r="9" fill="#FFFDF9" stroke="#DCC3B2" stroke-width="2"/>
+      <circle cx="72" cy="34" r="9" fill="#FFFDF9" stroke="#DCC3B2" stroke-width="2"/>
+      <circle cx="28" cy="34" r="3.8" fill="#FFDDE6"/>
+      <circle cx="72" cy="34" r="3.8" fill="#FFDDE6"/>
+      <ellipse cx="50" cy="58" rx="31" ry="29" fill="#FFFDF9" stroke="#DCC3B2" stroke-width="2"/>
+      <ellipse cx="39" cy="55" rx="3.1" ry="3.7" fill="#4C3A38"/>
+      <ellipse cx="61" cy="55" rx="3.1" ry="3.7" fill="#4C3A38"/>
+      <ellipse cx="29" cy="65" rx="5.5" ry="3.4" fill="#FFB3C8" opacity=".8"/>
+      <ellipse cx="71" cy="65" rx="5.5" ry="3.4" fill="#FFB3C8" opacity=".8"/>
+      <path d="M45.5 63.2 q2.2 2.8 4.5 0 q2.2 2.8 4.5 0" fill="none" stroke="#4C3A38" stroke-width="1.7" stroke-linecap="round"/>
     </svg>` },
-  { name:"번개이", svg:`
+  { key:"hachiware", name:"하치와레", svg:`
     <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-      <ellipse cx="50" cy="58" rx="34" ry="32" fill="#ffd94d"/>
-      <path d="M26 34 C20 18 30 12 34 22 C38 14 46 16 42 28 Z" fill="#ffd94d"/>
-      <path d="M74 34 C80 18 70 12 66 22 C62 14 54 16 58 28 Z" fill="#ffd94d"/>
-      <path d="M22 26 C16 18 24 12 30 20 Z" fill="#3a2e14"/><path d="M78 26 C84 18 76 12 70 20 Z" fill="#3a2e14"/>
-      <ellipse cx="50" cy="66" rx="24" ry="22" fill="#fff3b8"/>
-      <circle cx="38" cy="54" r="8" fill="#fff"/><circle cx="62" cy="54" r="8" fill="#fff"/>
-      <circle cx="39" cy="55" r="4" fill="#3a2e14"/><circle cx="61" cy="55" r="4" fill="#3a2e14"/>
-      <circle cx="40.5" cy="53.5" r="1.4" fill="#fff"/><circle cx="62.5" cy="53.5" r="1.4" fill="#fff"/>
-      <circle cx="29" cy="65" r="4" fill="#ffb0c8" opacity=".8"/><circle cx="71" cy="65" r="4" fill="#ffb0c8" opacity=".8"/>
-      <path d="M45 67 Q50 72 55 67" stroke="#3a2e14" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-      <path d="M66 82 L78 74 L72 82 L82 84 L66 94 L70 85 Z" fill="#ffca28"/>
+      <path d="M24 47 L27 17 L47 31 Z" fill="#A9D8F2" stroke="#69A9D4" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M76 47 L73 17 L53 31 Z" fill="#A9D8F2" stroke="#69A9D4" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M29 36 L30.5 22.5 L38.5 31 Z" fill="#FFD9E4"/>
+      <path d="M71 36 L69.5 22.5 L61.5 31 Z" fill="#FFD9E4"/>
+      <ellipse cx="50" cy="58" rx="31" ry="29" fill="#FFFDF9" stroke="#DCC3B2" stroke-width="2"/>
+      <path d="M19 56 C19 33 32 24 50 24 C68 24 81 33 81 56 L74 46 L67 58 L59 46 L50 60 L41 46 L33 58 L26 46 Z" fill="#8FC8EA" stroke="#69A9D4" stroke-width="1.6" stroke-linejoin="round"/>
+      <ellipse cx="39" cy="67" rx="3.1" ry="3.7" fill="#4C3A38"/>
+      <ellipse cx="61" cy="67" rx="3.1" ry="3.7" fill="#4C3A38"/>
+      <ellipse cx="29" cy="75" rx="5.2" ry="3.2" fill="#FFB3C8" opacity=".8"/>
+      <ellipse cx="71" cy="75" rx="5.2" ry="3.2" fill="#FFB3C8" opacity=".8"/>
+      <path d="M45.5 74 q2.2 2.6 4.5 0 q2.2 2.6 4.5 0" fill="none" stroke="#4C3A38" stroke-width="1.7" stroke-linecap="round"/>
     </svg>` },
-  { name:"방울이", svg:`
+  { key:"usagi", name:"우사기", svg:`
     <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-      <ellipse cx="50" cy="58" rx="34" ry="32" fill="#7fd8c4"/>
-      <path d="M50 10 C58 16 58 24 50 28 C42 24 42 16 50 10 Z" fill="#3fae94"/>
-      <ellipse cx="50" cy="64" rx="26" ry="24" fill="#c8f2e6"/>
-      <circle cx="38" cy="54" r="8" fill="#fff"/><circle cx="62" cy="54" r="8" fill="#fff"/>
-      <circle cx="39" cy="55" r="4" fill="#1f5c4c"/><circle cx="61" cy="55" r="4" fill="#1f5c4c"/>
-      <circle cx="40.5" cy="53.5" r="1.4" fill="#fff"/><circle cx="62.5" cy="53.5" r="1.4" fill="#fff"/>
-      <circle cx="29" cy="65" r="4" fill="#ffb0c8" opacity=".8"/><circle cx="71" cy="65" r="4" fill="#ffb0c8" opacity=".8"/>
-      <path d="M45 67 Q50 72 55 67" stroke="#1f5c4c" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-      <circle cx="24" cy="30" r="3" fill="#a9e8da"/><circle cx="76" cy="26" r="2.4" fill="#a9e8da"/>
-    </svg>` }
+      <ellipse cx="37" cy="26" rx="7.5" ry="19" transform="rotate(-10 37 26)" fill="#FFEFA8" stroke="#E0C874" stroke-width="2"/>
+      <ellipse cx="63" cy="26" rx="7.5" ry="19" transform="rotate(10 63 26)" fill="#FFEFA8" stroke="#E0C874" stroke-width="2"/>
+      <ellipse cx="37" cy="27" rx="3.5" ry="12" transform="rotate(-10 37 27)" fill="#FFC2CF"/>
+      <ellipse cx="63" cy="27" rx="3.5" ry="12" transform="rotate(10 63 27)" fill="#FFC2CF"/>
+      <ellipse cx="50" cy="63" rx="30" ry="27" fill="#FFEFA8" stroke="#E0C874" stroke-width="2"/>
+      <ellipse cx="39" cy="58" rx="3.2" ry="3.8" fill="#4C3A38"/>
+      <ellipse cx="61" cy="58" rx="3.2" ry="3.8" fill="#4C3A38"/>
+      <ellipse cx="27" cy="67" rx="5" ry="3" fill="#FFB3C8" opacity=".85"/>
+      <ellipse cx="73" cy="67" rx="5" ry="3" fill="#FFB3C8" opacity=".85"/>
+      <ellipse cx="50" cy="74" rx="9" ry="7" fill="#E8637C"/>
+      <ellipse cx="50" cy="77" rx="4.6" ry="2.6" fill="#FF9DB0"/>
+    </svg>` },
+  { key:"momonga", name:"모몽가", svg:`
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <path d="M23 62 C13 60 6 70 8 80 C14 83 21 76 24 68 Z" fill="#E9EFFA" stroke="#AFC0DC" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M77 62 C87 60 94 70 92 80 C86 83 79 76 76 68 Z" fill="#E9EFFA" stroke="#AFC0DC" stroke-width="2" stroke-linejoin="round"/>
+      <circle cx="26" cy="33" r="9.5" fill="#E9EFFA" stroke="#AFC0DC" stroke-width="2"/>
+      <circle cx="74" cy="33" r="9.5" fill="#E9EFFA" stroke="#AFC0DC" stroke-width="2"/>
+      <circle cx="26" cy="33" r="4" fill="#FFD3DE"/>
+      <circle cx="74" cy="33" r="4" fill="#FFD3DE"/>
+      <ellipse cx="50" cy="59" rx="31" ry="28" fill="#E9EFFA" stroke="#AFC0DC" stroke-width="2"/>
+      <circle cx="39" cy="57" r="6.2" fill="#3B3550"/>
+      <circle cx="61" cy="57" r="6.2" fill="#3B3550"/>
+      <circle cx="41" cy="54.6" r="2.2" fill="#fff"/>
+      <circle cx="63" cy="54.6" r="2.2" fill="#fff"/>
+      <ellipse cx="26" cy="68" rx="5" ry="3" fill="#FFB3C8" opacity=".85"/>
+      <ellipse cx="74" cy="68" rx="5" ry="3" fill="#FFB3C8" opacity=".85"/>
+      <path d="M45.5 68 q2.2 2.6 4.5 0 q2.2 2.6 4.5 0" fill="none" stroke="#3B3550" stroke-width="1.7" stroke-linecap="round"/>
+    </svg>` },
+  { key:"kurimanju", name:"쿠리만쥬", svg:`
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <path d="M25 47 L29 19 L47 32 Z" fill="#C98B5E" stroke="#9E6741" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M75 47 L71 19 L53 32 Z" fill="#C98B5E" stroke="#9E6741" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M30.5 40 L32.5 26 L41.5 33 Z" fill="#F3CBB0"/>
+      <path d="M69.5 40 L67.5 26 L58.5 33 Z" fill="#F3CBB0"/>
+      <ellipse cx="50" cy="59" rx="30" ry="28" fill="#D2966A" stroke="#9E6741" stroke-width="2"/>
+      <ellipse cx="50" cy="70" rx="17" ry="12" fill="#FFF1DF"/>
+      <ellipse cx="39" cy="57" rx="3" ry="3.5" fill="#3A2A22"/>
+      <ellipse cx="61" cy="57" rx="3" ry="3.5" fill="#3A2A22"/>
+      <ellipse cx="50" cy="66" rx="3.4" ry="2.4" fill="#6B4632"/>
+      <path d="M46 71.5 q4 3 8 0" fill="none" stroke="#6B4632" stroke-width="1.7" stroke-linecap="round"/>
+      <ellipse cx="28" cy="64" rx="4.6" ry="2.8" fill="#F0A0A0" opacity=".7"/>
+      <ellipse cx="72" cy="64" rx="4.6" ry="2.8" fill="#F0A0A0" opacity=".7"/>
+    </svg>` },
 ];
+
+/* 예전에 저장된 이름/번호도 새 치이카와 친구로 자연스럽게 이어 줍니다 */
+const AVATAR_ALIASES = {
+  "불꽃이":"chiikawa", "번개이":"hachiware", "방울이":"usagi",
+  "fire":"chiikawa", "bolt":"hachiware", "drop":"usagi"
+};
+/* 아이별 기본 캐릭터: 라희 = 치이카와, 라은 = 하치와레 */
+const DEFAULT_AVATAR = { stella:0, ella:1 };
+
+function avatarIndexOf(v, fallback){
+  const n = AVATARS.length;
+  const mod = x => ((Math.trunc(x) % n) + n) % n;
+  const base = Number.isFinite(fallback) ? mod(fallback) : 0;
+  if (typeof v === "number" && Number.isFinite(v)) return mod(v);
+  if (typeof v === "string"){
+    const s = v.trim();
+    if (!s) return base;
+    const byKey = AVATARS.findIndex(a => a.key === s.toLowerCase() || a.name === s);
+    if (byKey >= 0) return byKey;
+    const alias = AVATAR_ALIASES[s] || AVATAR_ALIASES[s.toLowerCase()];
+    if (alias){
+      const i = AVATARS.findIndex(a => a.key === alias);
+      if (i >= 0) return i;
+    }
+    const num = Number(s);
+    if (Number.isFinite(num)) return mod(num);
+    return base;
+  }
+  if (v && typeof v === "object") return avatarIndexOf(v.key || v.name || v.id, fallback);
+  return base;
+}
 
 /* ---------- 달력 ---------- */
 let calY, calM;   // 표시 중인 연/월
@@ -640,13 +739,25 @@ function kidProgress(k){
 function renderQuests(){
   const area = document.getElementById("questArea");
   area.innerHTML = Object.entries(state.kids).map(([key,k])=>{
-    const av = AVATARS[k.avatar % AVATARS.length];
+    const idx = avatarIndexOf(k && k.avatar, DEFAULT_AVATAR[key]);
+    const av = AVATARS[idx];
     const prog = kidProgress(k);
     const allDone = prog.total>0 && prog.done===prog.total;
     return `<div class="card kid-card" data-kid="${key}">
       ${k._celebrate ? `<div class="level-pop"><span class="emo">🎉✨</span><span class="big">LEVEL UP! Lv.${k.lv}</span><span style="font-weight:700;color:#6d5a9e">도감 +1 · 올클리어 알 +1 🥚</span></div>` : ""}
+      <div class="avatar-pop" data-pop>
+        <button class="pop-close" data-popclose aria-label="닫기">✕</button>
+        <div class="pop-title">누구로 바꿀까? 🐾</div>
+        <div class="pop-grid">
+          ${AVATARS.map((a,i)=>`<button class="pop-item ${i===idx?"sel":""}" data-pick="${i}" aria-label="${esc(a.name)}" title="${esc(a.name)}">
+            <span class="pic">${a.svg}</span><span class="pname">${esc(a.name)}</span></button>`).join("")}
+        </div>
+      </div>
       <div class="kid-top">
-        <button class="avatar" data-act="avatar" title="캐릭터 바꾸기">${av.svg}</button>
+        <div class="avatar-wrap">
+          <button class="avatar" data-act="avatar" title="${esc(av.name)} · 눌러서 캐릭터 바꾸기" aria-label="캐릭터 바꾸기">${av.svg}</button>
+          <span class="avatar-name">${esc(av.name)}</span>
+        </div>
         <div class="kid-id">
           <div class="name-row">
             <span class="name">${esc(k.name)}</span>
@@ -715,6 +826,19 @@ function toggleQuest(key, qid, checked){
   save(); renderAll();
 }
 
+/* 캐릭터 고르기 팔레트 열기/닫기 */
+function openAvatarPicker(card){
+  const pop = card.querySelector(".avatar-pop");
+  if (!pop) return;
+  const wasOpen = pop.classList.contains("show");
+  document.querySelectorAll("#questArea .avatar-pop.show").forEach(p=>p.classList.remove("show"));
+  if (!wasOpen) pop.classList.add("show");
+}
+document.addEventListener("click", e=>{
+  if (e.target.closest("[data-kid]")) return;
+  document.querySelectorAll("#questArea .avatar-pop.show").forEach(p=>p.classList.remove("show"));
+});
+
 document.getElementById("questArea").addEventListener("change", e=>{
   const cb = e.target.closest("input[type=checkbox][data-q]");
   if (!cb) return;
@@ -724,8 +848,20 @@ document.getElementById("questArea").addEventListener("change", e=>{
 document.getElementById("questArea").addEventListener("click", e=>{
   const card = e.target.closest("[data-kid]"); if (!card) return;
   const key = card.dataset.kid, k = state.kids[key];
+
+  /* 캐릭터 고르기 */
+  const pick = e.target.closest("[data-pick]");
+  if (pick){
+    k.avatar = avatarIndexOf(+pick.dataset.pick, DEFAULT_AVATAR[key]);
+    save(); renderQuests(); return;
+  }
+  if (e.target.closest("[data-popclose]") || e.target.classList.contains("avatar-pop")){
+    card.querySelector(".avatar-pop")?.classList.remove("show");
+    return;
+  }
+
   const act = e.target.closest("[data-act]")?.dataset.act;
-  if (act === "avatar"){ k.avatar = (k.avatar+1) % AVATARS.length; save(); renderQuests(); }
+  if (act === "avatar"){ openAvatarPicker(card); }
   else if (act === "resetDay"){
     k.quests.forEach(q=>q.done=false);
     k.xp = 0;
