@@ -186,6 +186,11 @@
   .lv{font-size:12.5px; font-weight:800; color:#8a5cd6; background:#efe6ff; padding:3px 9px; border-radius:999px;}
   .dex{font-size:11.5px; font-weight:700; color:var(--ink-soft); background:#f3f1fa; padding:3px 9px; border-radius:999px;}
   .egg-badge{font-size:11.5px; font-weight:700; color:#b0722a; background:#fff3dd; padding:3px 9px; border-radius:999px;}
+  .tot{
+    font-size:11.5px; font-weight:800; color:#a8762c; letter-spacing:-.2px;
+    background:linear-gradient(135deg,#fff8e8,#ffeec9); padding:3px 9px; border-radius:999px;
+    box-shadow:inset 0 0 0 1px #ffe3b8; font-variant-numeric:tabular-nums;
+  }
   .xp-wrap{display:flex; align-items:center; gap:8px; margin-top:8px;}
   .xp-bar{flex:1; height:12px; background:#efeaf8; border-radius:999px; overflow:hidden;}
   .xp-fill{height:100%; border-radius:999px; background:linear-gradient(90deg,#ffb05e,#ff8fb2,#b7a8f5); transition:width .5s cubic-bezier(.2,.8,.3,1.2); width:0%;}
@@ -193,7 +198,14 @@
   .q-head{display:flex; align-items:center; margin:13px 2px 8px;}
   .q-head .t{font-size:13.5px; font-weight:800;}
   .q-head .t b{color:var(--pink);}
-  .reset-day{margin-left:auto; border:none; background:transparent; font-size:12px; font-weight:700; color:#b9a8e0; text-decoration:underline; padding:4px;}
+  .q-actions{margin-left:auto; display:flex; align-items:center; gap:3px; flex:0 0 auto;}
+  .reset-day{border:none; background:transparent; font-size:12px; font-weight:700; color:#b9a8e0; text-decoration:underline; padding:4px;}
+  .reset-total{
+    border:none; border-radius:999px; background:#fff4e2; color:#a8762c;
+    font-size:11px; font-weight:800; padding:4px 9px; letter-spacing:-.2px;
+    box-shadow:inset 0 0 0 1px #ffe3b8; white-space:nowrap;
+  }
+  .reset-total:active{transform:scale(.93);}
   .quest-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; min-height:60px;}
   .quest{
     display:flex; align-items:center; gap:10px; padding:11px 12px;
@@ -424,7 +436,7 @@ const DEFAULT_STATE = () => ({
   ],
   kids: {
     stella: {
-      name:"라희", cls:"Stella · Y5A", avatar:0, lv:1, xp:65, dex:0, eggs:0,
+      name:"라희", cls:"Stella · Y5A", avatar:0, lv:1, xp:65, totalXp:65, dex:0, eggs:0,
       quests:[
         { id:uid(), t:"영어책 읽기", p:20, done:false },
         { id:uid(), t:"바이올린 연습", p:30, done:false },
@@ -434,7 +446,7 @@ const DEFAULT_STATE = () => ({
       ]
     },
     ella: {
-      name:"라은", cls:"Ella · FS3 Jaguars", avatar:1, lv:1, xp:55, dex:0, eggs:0,
+      name:"라은", cls:"Ella · FS3 Jaguars", avatar:1, lv:1, xp:55, totalXp:55, dex:0, eggs:0,
       quests:[
         { id:uid(), t:"유치원 기분 좋게 등원", p:20, done:false },
         { id:uid(), t:"그림책 보기", p:20, done:false },
@@ -787,6 +799,14 @@ function kidProgress(k){
   const total = k.quests.length, done = k.quests.filter(q=>q.done).length;
   return {total, done};
 }
+/* 누적 점수 — totalXp가 아직 없는 예전 데이터(Firebase·localStorage)는
+   지금 레벨·경험치에서 자연스럽게 이어서 계산합니다. */
+function getTotalXp(k){
+  if (!k) return 0;
+  const raw = k.totalXp;
+  if (raw !== undefined && raw !== null && raw !== "" && Number.isFinite(+raw)) return Math.max(0, Math.trunc(+raw));
+  return ((Math.max(1, k.lv || 1) - 1) * 100) + (k.xp || 0);
+}
 function renderQuests(){
   const area = document.getElementById("questArea");
   /* 라희(Stella) → 라은(Ella) 순서로 고정. 그 밖의 키가 있으면 뒤에 이어 붙입니다. */
@@ -821,6 +841,7 @@ function renderQuests(){
             <span class="lv">Lv.${k.lv}</span>
             <span class="dex">도감 ${k.dex}</span>
             <span class="egg-badge">올클리어 알 ${k.eggs}</span>
+            <span class="tot" title="지금까지 모은 점수">🏆 누적 ${getTotalXp(k)}점</span>
             ${allDone ? `<span class="egg-badge" style="background:#e2f7ee;color:#1d7a52">🌟 올클리어!</span>` : ""}
           </div>
           <div class="xp-wrap">
@@ -831,7 +852,10 @@ function renderQuests(){
       </div>
       <div class="q-head">
         <span class="t">⭐ 오늘의 퀘스트 <b>${prog.done}/${prog.total}</b></span>
-        <button class="reset-day" data-act="resetDay">하루 초기화</button>
+        <span class="q-actions">
+          <button class="reset-total" data-act="resetTotal" title="누적 점수만 0점으로 초기화">누적 초기화</button>
+          <button class="reset-day" data-act="resetDay">하루 초기화</button>
+        </span>
       </div>
       <ul class="quest-list" data-qkey="${key}">
         ${k.quests.length ? k.quests.map(q=>`
@@ -868,6 +892,7 @@ function toggleQuest(key, qid, checked){
   if (q.done === checked) return;
   q.done = checked;
   if (checked){
+    k.totalXp = getTotalXp(k) + q.p;
     k.xp += q.p;
     while (k.xp >= 100){
       k.xp -= 100; k.lv += 1; k.dex += 1; k.eggs += 1;
@@ -875,6 +900,7 @@ function toggleQuest(key, qid, checked){
       setTimeout(()=>{ renderQuests(); }, 10);
     }
   } else {
+    k.totalXp = Math.max(0, getTotalXp(k) - q.p);
     k.xp = Math.max(0, k.xp - q.p);
   }
   save(); renderAll();
@@ -917,8 +943,15 @@ document.getElementById("questArea").addEventListener("click", e=>{
   const act = e.target.closest("[data-act]")?.dataset.act;
   if (act === "avatar"){ openAvatarPicker(card); }
   else if (act === "resetDay"){
+    const keepTotal = getTotalXp(k);   // 오늘 번 점수도 누적에는 그대로 남깁니다
     k.quests.forEach(q=>q.done=false);
     k.xp = 0;
+    k.totalXp = keepTotal;
+    save(); renderAll();
+  }
+  else if (act === "resetTotal"){
+    if (!confirm(`${k.name}의 누적 점수를 0점으로 초기화할까요?`)) return;
+    k.totalXp = 0;
     save(); renderAll();
   }
   else if (act === "addQuest"){
