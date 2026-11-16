@@ -556,94 +556,145 @@ const Sync = {
   }
 };
 
-/* ---------- 치이카와 친구들 캐릭터 SVG ----------
-   동그란 얼굴 + 동글동글 귀 + 볼터치의 치이카와 스타일 인라인 일러스트.
+/* ---------- 고양이 친구들 캐릭터 SVG ----------
+   뾰족한 고양이 귀 + 동글동글 반짝이는 눈 + 수염 + 볼터치의 귀여운 인라인 일러스트.
    배열 순서(0·1·2…)가 그대로 저장되는 avatar 값이라, 예전에 저장된
-   0(불꽃이)·1(번개이)·2(방울이)도 아래 새 친구로 자연스럽게 이어집니다.
-     0 치이카와 · 1 하치와레 · 2 우사기 · 3 모몽가 · 4 쿠리만쥬          */
+   치이카와 친구들(0~4)도 아래 새 고양이 친구로 자연스럽게 이어집니다.
+     0 치즈냥 · 1 턱시도냥 · 2 삼색냥 · 3 회색냥 · 4 딸기밀크냥          */
 const AVATARS = [
-  { key:"chiikawa", name:"치이카와", svg:`
+  { key:"cheese", name:"치즈냥", svg:`
     <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="28" cy="34" r="9" fill="#FFFDF9" stroke="#DCC3B2" stroke-width="2"/>
-      <circle cx="72" cy="34" r="9" fill="#FFFDF9" stroke="#DCC3B2" stroke-width="2"/>
-      <circle cx="28" cy="34" r="3.8" fill="#FFDDE6"/>
-      <circle cx="72" cy="34" r="3.8" fill="#FFDDE6"/>
-      <ellipse cx="50" cy="58" rx="31" ry="29" fill="#FFFDF9" stroke="#DCC3B2" stroke-width="2"/>
-      <ellipse cx="39" cy="55" rx="3.1" ry="3.7" fill="#4C3A38"/>
-      <ellipse cx="61" cy="55" rx="3.1" ry="3.7" fill="#4C3A38"/>
-      <ellipse cx="29" cy="65" rx="5.5" ry="3.4" fill="#FFB3C8" opacity=".8"/>
-      <ellipse cx="71" cy="65" rx="5.5" ry="3.4" fill="#FFB3C8" opacity=".8"/>
-      <path d="M45.5 63.2 q2.2 2.8 4.5 0 q2.2 2.8 4.5 0" fill="none" stroke="#4C3A38" stroke-width="1.7" stroke-linecap="round"/>
+      <path d="M24 43 L27 14 L48 29 Z" fill="#FFE7A8" stroke="#E3BB66" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M76 43 L73 14 L52 29 Z" fill="#FFE7A8" stroke="#E3BB66" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M29.5 34 L31 21.5 L39.5 29.5 Z" fill="#FFBFCE"/>
+      <path d="M70.5 34 L69 21.5 L60.5 29.5 Z" fill="#FFBFCE"/>
+      <ellipse cx="50" cy="58" rx="31" ry="28.5" fill="#FFE7A8" stroke="#E3BB66" stroke-width="2.2"/>
+      <path d="M41 35.2 q4 -5.5 8 0" fill="none" stroke="#E6B65E" stroke-width="2.1" stroke-linecap="round"/>
+      <path d="M51 34.8 q4 -5.5 8 0" fill="none" stroke="#E6B65E" stroke-width="2.1" stroke-linecap="round"/>
+      <path d="M9 55.5 L23 57 M8.5 64 L23 65" fill="none" stroke="#D9AE6E" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M91 55.5 L77 57 M91.5 64 L77 65" fill="none" stroke="#D9AE6E" stroke-width="1.5" stroke-linecap="round"/>
+      <ellipse cx="27" cy="66" rx="5.2" ry="3.2" fill="#FFB3C8" opacity=".85"/>
+      <ellipse cx="73" cy="66" rx="5.2" ry="3.2" fill="#FFB3C8" opacity=".85"/>
+      <circle cx="39" cy="57.5" r="5.6" fill="#4A4458"/>
+      <circle cx="61" cy="57.5" r="5.6" fill="#4A4458"/>
+      <circle cx="41" cy="55" r="2.1" fill="#fff"/>
+      <circle cx="63" cy="55" r="2.1" fill="#fff"/>
+      <circle cx="37" cy="60.5" r="1.1" fill="#fff" opacity=".8"/>
+      <circle cx="59" cy="60.5" r="1.1" fill="#fff" opacity=".8"/>
+      <path d="M47.4 65.4 h5.2 l-2.6 2.9 z" fill="#F0839C"/>
+      <path d="M50 68.3 q-2.6 3.1 -4.9 0 M50 68.3 q2.6 3.1 4.9 0" fill="none" stroke="#B08A5C" stroke-width="1.6" stroke-linecap="round"/>
     </svg>` },
-  { key:"hachiware", name:"하치와레", svg:`
+  { key:"tuxedo", name:"턱시도냥", svg:`
     <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-      <path d="M24 47 L27 17 L47 31 Z" fill="#A9D8F2" stroke="#69A9D4" stroke-width="2" stroke-linejoin="round"/>
-      <path d="M76 47 L73 17 L53 31 Z" fill="#A9D8F2" stroke="#69A9D4" stroke-width="2" stroke-linejoin="round"/>
-      <path d="M29 36 L30.5 22.5 L38.5 31 Z" fill="#FFD9E4"/>
-      <path d="M71 36 L69.5 22.5 L61.5 31 Z" fill="#FFD9E4"/>
-      <ellipse cx="50" cy="58" rx="31" ry="29" fill="#FFFDF9" stroke="#DCC3B2" stroke-width="2"/>
-      <path d="M19 56 C19 33 32 24 50 24 C68 24 81 33 81 56 L74 46 L67 58 L59 46 L50 60 L41 46 L33 58 L26 46 Z" fill="#8FC8EA" stroke="#69A9D4" stroke-width="1.6" stroke-linejoin="round"/>
-      <ellipse cx="39" cy="67" rx="3.1" ry="3.7" fill="#4C3A38"/>
-      <ellipse cx="61" cy="67" rx="3.1" ry="3.7" fill="#4C3A38"/>
-      <ellipse cx="29" cy="75" rx="5.2" ry="3.2" fill="#FFB3C8" opacity=".8"/>
-      <ellipse cx="71" cy="75" rx="5.2" ry="3.2" fill="#FFB3C8" opacity=".8"/>
-      <path d="M45.5 74 q2.2 2.6 4.5 0 q2.2 2.6 4.5 0" fill="none" stroke="#4C3A38" stroke-width="1.7" stroke-linecap="round"/>
+      <path d="M24 43 L27 14 L48 29 Z" fill="#3A3550" stroke="#262238" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M76 43 L73 14 L52 29 Z" fill="#3A3550" stroke="#262238" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M29.5 34 L31 21.5 L39.5 29.5 Z" fill="#F2A9BE"/>
+      <path d="M70.5 34 L69 21.5 L60.5 29.5 Z" fill="#F2A9BE"/>
+      <ellipse cx="50" cy="58" rx="31" ry="28.5" fill="#FFFDF9" stroke="#C5BAD6" stroke-width="2.2"/>
+      <path d="M20.5 49.5 C21 32 33 26.5 50 26.5 C67 26.5 79 32 79.5 49.5 C71 40.5 61 38.5 50 38.5 C39 38.5 29 40.5 20.5 49.5 Z" fill="#3A3550"/>
+      <path d="M9 55.5 L23 57 M8.5 64 L23 65" fill="none" stroke="#B9AEC9" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M91 55.5 L77 57 M91.5 64 L77 65" fill="none" stroke="#B9AEC9" stroke-width="1.5" stroke-linecap="round"/>
+      <ellipse cx="27" cy="66" rx="5.2" ry="3.2" fill="#FFB3C8" opacity=".9"/>
+      <ellipse cx="73" cy="66" rx="5.2" ry="3.2" fill="#FFB3C8" opacity=".9"/>
+      <circle cx="39" cy="57.5" r="5.6" fill="#3F3A52"/>
+      <circle cx="61" cy="57.5" r="5.6" fill="#3F3A52"/>
+      <circle cx="41" cy="55" r="2.1" fill="#fff"/>
+      <circle cx="63" cy="55" r="2.1" fill="#fff"/>
+      <circle cx="37" cy="60.5" r="1.1" fill="#fff" opacity=".8"/>
+      <circle cx="59" cy="60.5" r="1.1" fill="#fff" opacity=".8"/>
+      <path d="M47.4 65.4 h5.2 l-2.6 2.9 z" fill="#F0839C"/>
+      <path d="M50 68.3 q-2.6 3.1 -4.9 0 M50 68.3 q2.6 3.1 4.9 0" fill="none" stroke="#6C6680" stroke-width="1.6" stroke-linecap="round"/>
     </svg>` },
-  { key:"usagi", name:"우사기", svg:`
+  { key:"calico", name:"삼색냥", svg:`
     <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-      <ellipse cx="37" cy="26" rx="7.5" ry="19" transform="rotate(-10 37 26)" fill="#FFEFA8" stroke="#E0C874" stroke-width="2"/>
-      <ellipse cx="63" cy="26" rx="7.5" ry="19" transform="rotate(10 63 26)" fill="#FFEFA8" stroke="#E0C874" stroke-width="2"/>
-      <ellipse cx="37" cy="27" rx="3.5" ry="12" transform="rotate(-10 37 27)" fill="#FFC2CF"/>
-      <ellipse cx="63" cy="27" rx="3.5" ry="12" transform="rotate(10 63 27)" fill="#FFC2CF"/>
-      <ellipse cx="50" cy="63" rx="30" ry="27" fill="#FFEFA8" stroke="#E0C874" stroke-width="2"/>
-      <ellipse cx="39" cy="58" rx="3.2" ry="3.8" fill="#4C3A38"/>
-      <ellipse cx="61" cy="58" rx="3.2" ry="3.8" fill="#4C3A38"/>
-      <ellipse cx="27" cy="67" rx="5" ry="3" fill="#FFB3C8" opacity=".85"/>
-      <ellipse cx="73" cy="67" rx="5" ry="3" fill="#FFB3C8" opacity=".85"/>
-      <ellipse cx="50" cy="74" rx="9" ry="7" fill="#E8637C"/>
-      <ellipse cx="50" cy="77" rx="4.6" ry="2.6" fill="#FF9DB0"/>
+      <path d="M24 43 L27 14 L48 29 Z" fill="#F6B070" stroke="#DB9152" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M76 43 L73 14 L52 29 Z" fill="#B5805C" stroke="#96684A" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M29.5 34 L31 21.5 L39.5 29.5 Z" fill="#FFD8C6"/>
+      <path d="M70.5 34 L69 21.5 L60.5 29.5 Z" fill="#F0CBB6"/>
+      <ellipse cx="50" cy="58" rx="31" ry="28.5" fill="#FFFDF9" stroke="#C5BAD6" stroke-width="2.2"/>
+      <path d="M25 47 C27 33.5 35 28 46 28.5 C41 33 34 39 30 51 Z" fill="#F6B070"/>
+      <path d="M75 47 C73 33.5 65 28 54 28.5 C59 33 66 39 70 51 Z" fill="#B5805C"/>
+      <path d="M9 55.5 L23 57 M8.5 64 L23 65" fill="none" stroke="#B9AEC9" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M91 55.5 L77 57 M91.5 64 L77 65" fill="none" stroke="#B9AEC9" stroke-width="1.5" stroke-linecap="round"/>
+      <ellipse cx="27" cy="66" rx="5.2" ry="3.2" fill="#FFB3C8" opacity=".9"/>
+      <ellipse cx="73" cy="66" rx="5.2" ry="3.2" fill="#FFB3C8" opacity=".9"/>
+      <circle cx="39" cy="57.5" r="5.6" fill="#4A4458"/>
+      <circle cx="61" cy="57.5" r="5.6" fill="#4A4458"/>
+      <circle cx="41" cy="55" r="2.1" fill="#fff"/>
+      <circle cx="63" cy="55" r="2.1" fill="#fff"/>
+      <circle cx="37" cy="60.5" r="1.1" fill="#fff" opacity=".8"/>
+      <circle cx="59" cy="60.5" r="1.1" fill="#fff" opacity=".8"/>
+      <path d="M47.4 65.4 h5.2 l-2.6 2.9 z" fill="#F0839C"/>
+      <path d="M50 68.3 q-2.6 3.1 -4.9 0 M50 68.3 q2.6 3.1 4.9 0" fill="none" stroke="#6C6680" stroke-width="1.6" stroke-linecap="round"/>
     </svg>` },
-  { key:"momonga", name:"모몽가", svg:`
+  { key:"gray", name:"회색냥", svg:`
     <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-      <path d="M23 62 C13 60 6 70 8 80 C14 83 21 76 24 68 Z" fill="#E9EFFA" stroke="#AFC0DC" stroke-width="2" stroke-linejoin="round"/>
-      <path d="M77 62 C87 60 94 70 92 80 C86 83 79 76 76 68 Z" fill="#E9EFFA" stroke="#AFC0DC" stroke-width="2" stroke-linejoin="round"/>
-      <circle cx="26" cy="33" r="9.5" fill="#E9EFFA" stroke="#AFC0DC" stroke-width="2"/>
-      <circle cx="74" cy="33" r="9.5" fill="#E9EFFA" stroke="#AFC0DC" stroke-width="2"/>
-      <circle cx="26" cy="33" r="4" fill="#FFD3DE"/>
-      <circle cx="74" cy="33" r="4" fill="#FFD3DE"/>
-      <ellipse cx="50" cy="59" rx="31" ry="28" fill="#E9EFFA" stroke="#AFC0DC" stroke-width="2"/>
-      <circle cx="39" cy="57" r="6.2" fill="#3B3550"/>
-      <circle cx="61" cy="57" r="6.2" fill="#3B3550"/>
-      <circle cx="41" cy="54.6" r="2.2" fill="#fff"/>
-      <circle cx="63" cy="54.6" r="2.2" fill="#fff"/>
-      <ellipse cx="26" cy="68" rx="5" ry="3" fill="#FFB3C8" opacity=".85"/>
-      <ellipse cx="74" cy="68" rx="5" ry="3" fill="#FFB3C8" opacity=".85"/>
-      <path d="M45.5 68 q2.2 2.6 4.5 0 q2.2 2.6 4.5 0" fill="none" stroke="#3B3550" stroke-width="1.7" stroke-linecap="round"/>
+      <path d="M24 43 L27 14 L48 29 Z" fill="#CBD6E2" stroke="#9AAFC2" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M76 43 L73 14 L52 29 Z" fill="#CBD6E2" stroke="#9AAFC2" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M29.5 34 L31 21.5 L39.5 29.5 Z" fill="#F2BAC8"/>
+      <path d="M70.5 34 L69 21.5 L60.5 29.5 Z" fill="#F2BAC8"/>
+      <ellipse cx="50" cy="58" rx="31" ry="28.5" fill="#CBD6E2" stroke="#9AAFC2" stroke-width="2.2"/>
+      <ellipse cx="50" cy="72" rx="14.5" ry="9" fill="#E4EBF3"/>
+      <path d="M9 55.5 L23 57 M8.5 64 L23 65" fill="none" stroke="#8FA3B8" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M91 55.5 L77 57 M91.5 64 L77 65" fill="none" stroke="#8FA3B8" stroke-width="1.5" stroke-linecap="round"/>
+      <ellipse cx="27" cy="66" rx="5.2" ry="3.2" fill="#FFAFC6" opacity=".85"/>
+      <ellipse cx="73" cy="66" rx="5.2" ry="3.2" fill="#FFAFC6" opacity=".85"/>
+      <circle cx="39" cy="57.5" r="5.6" fill="#434E62"/>
+      <circle cx="61" cy="57.5" r="5.6" fill="#434E62"/>
+      <circle cx="41" cy="55" r="2.1" fill="#fff"/>
+      <circle cx="63" cy="55" r="2.1" fill="#fff"/>
+      <circle cx="37" cy="60.5" r="1.1" fill="#fff" opacity=".8"/>
+      <circle cx="59" cy="60.5" r="1.1" fill="#fff" opacity=".8"/>
+      <path d="M47.4 65.4 h5.2 l-2.6 2.9 z" fill="#F0839C"/>
+      <path d="M50 68.3 q-2.6 3.1 -4.9 0 M50 68.3 q2.6 3.1 4.9 0" fill="none" stroke="#7B8B9E" stroke-width="1.6" stroke-linecap="round"/>
     </svg>` },
-  { key:"kurimanju", name:"쿠리만쥬", svg:`
+  { key:"strawberry", name:"딸기밀크냥", svg:`
     <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-      <path d="M25 47 L29 19 L47 32 Z" fill="#C98B5E" stroke="#9E6741" stroke-width="2" stroke-linejoin="round"/>
-      <path d="M75 47 L71 19 L53 32 Z" fill="#C98B5E" stroke="#9E6741" stroke-width="2" stroke-linejoin="round"/>
-      <path d="M30.5 40 L32.5 26 L41.5 33 Z" fill="#F3CBB0"/>
-      <path d="M69.5 40 L67.5 26 L58.5 33 Z" fill="#F3CBB0"/>
-      <ellipse cx="50" cy="59" rx="30" ry="28" fill="#D2966A" stroke="#9E6741" stroke-width="2"/>
-      <ellipse cx="50" cy="70" rx="17" ry="12" fill="#FFF1DF"/>
-      <ellipse cx="39" cy="57" rx="3" ry="3.5" fill="#3A2A22"/>
-      <ellipse cx="61" cy="57" rx="3" ry="3.5" fill="#3A2A22"/>
-      <ellipse cx="50" cy="66" rx="3.4" ry="2.4" fill="#6B4632"/>
-      <path d="M46 71.5 q4 3 8 0" fill="none" stroke="#6B4632" stroke-width="1.7" stroke-linecap="round"/>
-      <ellipse cx="28" cy="64" rx="4.6" ry="2.8" fill="#F0A0A0" opacity=".7"/>
-      <ellipse cx="72" cy="64" rx="4.6" ry="2.8" fill="#F0A0A0" opacity=".7"/>
+      <path d="M24 43 L27 14 L48 29 Z" fill="#FFD9E3" stroke="#EF9FB6" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M76 43 L73 14 L52 29 Z" fill="#FFD9E3" stroke="#EF9FB6" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M29.5 34 L31 21.5 L39.5 29.5 Z" fill="#FFB3C9"/>
+      <path d="M70.5 34 L69 21.5 L60.5 29.5 Z" fill="#FFB3C9"/>
+      <ellipse cx="50" cy="58" rx="31" ry="28.5" fill="#FFD9E3" stroke="#EF9FB6" stroke-width="2.2"/>
+      <path d="M50 32 c-3.6 0 -6 2.9 -6 5.9 c0 3.4 3.4 6.1 6 8.6 c2.6 -2.5 6 -5.2 6 -8.6 c0 -3 -2.4 -5.9 -6 -5.9 z" fill="#FF7C93"/>
+      <path d="M45.5 32.2 q4.5 -4.4 9 -0.2" fill="none" stroke="#7FC08A" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="48" cy="37.5" r=".8" fill="#FFF3F6"/>
+      <circle cx="52.4" cy="41" r=".8" fill="#FFF3F6"/>
+      <ellipse cx="50" cy="72" rx="13" ry="8.5" fill="#FFF7FA"/>
+      <path d="M9 55.5 L23 57 M8.5 64 L23 65" fill="none" stroke="#E79AB0" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M91 55.5 L77 57 M91.5 64 L77 65" fill="none" stroke="#E79AB0" stroke-width="1.5" stroke-linecap="round"/>
+      <ellipse cx="27" cy="66" rx="5.2" ry="3.2" fill="#FF96B3" opacity=".8"/>
+      <ellipse cx="73" cy="66" rx="5.2" ry="3.2" fill="#FF96B3" opacity=".8"/>
+      <circle cx="39" cy="57.5" r="5.6" fill="#4A4458"/>
+      <circle cx="61" cy="57.5" r="5.6" fill="#4A4458"/>
+      <circle cx="41" cy="55" r="2.1" fill="#fff"/>
+      <circle cx="63" cy="55" r="2.1" fill="#fff"/>
+      <circle cx="37" cy="60.5" r="1.1" fill="#fff" opacity=".8"/>
+      <circle cx="59" cy="60.5" r="1.1" fill="#fff" opacity=".8"/>
+      <path d="M47.4 65.4 h5.2 l-2.6 2.9 z" fill="#F0839C"/>
+      <path d="M50 68.3 q-2.6 3.1 -4.9 0 M50 68.3 q2.6 3.1 4.9 0" fill="none" stroke="#D97F97" stroke-width="1.6" stroke-linecap="round"/>
     </svg>` },
 ];
 
-/* 예전에 저장된 이름/번호도 새 치이카와 친구로 자연스럽게 이어 줍니다 */
+/* 예전에 저장된 이름/번호도 새 고양이 친구로 자연스럽게 이어 줍니다 */
 const AVATAR_ALIASES = {
-  "불꽃이":"chiikawa", "번개이":"hachiware", "방울이":"usagi",
-  "fire":"chiikawa", "bolt":"hachiware", "drop":"usagi"
+  "치이카와":"cheese", "하치와레":"tuxedo", "우사기":"calico", "모몽가":"gray", "쿠리만쥬":"strawberry",
+  "불꽃이":"cheese", "번개이":"tuxedo", "방울이":"calico",
+  "chiikawa":"cheese", "hachiware":"tuxedo", "usagi":"calico", "momonga":"gray", "kurimanju":"strawberry",
+  "fire":"cheese", "bolt":"tuxedo", "drop":"calico"
 };
-/* 아이별 기본 캐릭터: 라희 = 치이카와, 라은 = 하치와레 */
+/* 아이별 기본 캐릭터: 라희 = 치즈냥, 라은 = 턱시도냥 */
 const DEFAULT_AVATAR = { stella:0, ella:1 };
+
+/* ---------- 아이 카드 순서 ----------
+   Firebase가 키를 알파벳순(ella → stella)으로 내려도 화면에서는 항상
+   라희(Stella)가 왼쪽/위, 라은(Ella)이 오른쪽/아래로 고정합니다. */
+const KID_ORDER = ["stella", "ella"];
+function orderedKidKeys(kids){
+  const keys = Object.keys(kids || {});
+  const head = KID_ORDER.filter(k => keys.indexOf(k) >= 0);
+  const rest = keys.filter(k => KID_ORDER.indexOf(k) < 0).sort();
+  return head.concat(rest);
+}
 
 function avatarIndexOf(v, fallback){
   const n = AVATARS.length;
@@ -738,7 +789,10 @@ function kidProgress(k){
 }
 function renderQuests(){
   const area = document.getElementById("questArea");
-  area.innerHTML = Object.entries(state.kids).map(([key,k])=>{
+  /* 라희(Stella) → 라은(Ella) 순서로 고정. 그 밖의 키가 있으면 뒤에 이어 붙입니다. */
+  area.innerHTML = orderedKidKeys(state.kids).map(key=>{
+    const k = state.kids[key];
+    if (!k) return "";
     const idx = avatarIndexOf(k && k.avatar, DEFAULT_AVATAR[key]);
     const av = AVATARS[idx];
     const prog = kidProgress(k);
@@ -747,7 +801,7 @@ function renderQuests(){
       ${k._celebrate ? `<div class="level-pop"><span class="emo">🎉✨</span><span class="big">LEVEL UP! Lv.${k.lv}</span><span style="font-weight:700;color:#6d5a9e">도감 +1 · 올클리어 알 +1 🥚</span></div>` : ""}
       <div class="avatar-pop" data-pop>
         <button class="pop-close" data-popclose aria-label="닫기">✕</button>
-        <div class="pop-title">누구로 바꿀까? 🐾</div>
+        <div class="pop-title">어떤 고양이로 바꿀까? 🐾</div>
         <div class="pop-grid">
           ${AVATARS.map((a,i)=>`<button class="pop-item ${i===idx?"sel":""}" data-pick="${i}" aria-label="${esc(a.name)}" title="${esc(a.name)}">
             <span class="pic">${a.svg}</span><span class="pname">${esc(a.name)}</span></button>`).join("")}
@@ -953,7 +1007,9 @@ setInterval(tick, 1000);
 function renderStandby(){
   const sb = document.getElementById("standby");
   if (sb.hidden) return;
-  document.getElementById("sbQuests").innerHTML = Object.values(state.kids).map(k=>{
+  document.getElementById("sbQuests").innerHTML = orderedKidKeys(state.kids).map(key=>{
+    const k = state.kids[key];
+    if (!k) return "";
     const p = kidProgress(k);
     const pct = p.total ? Math.round(p.done/p.total*100) : 0;
     return `<div class="sb-row"><span>${esc(k.name)} <small style="color:#b9aede">Lv.${k.lv}</small></span><span class="b">${p.done}/${p.total}</span></div>
