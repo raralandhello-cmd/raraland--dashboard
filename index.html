@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>라라랜드 대시보드</title>
+<style>
+  :root{
+    --pink:#ff8fb2; --pink-soft:#ffd6e4; --purple:#9b8ce0; --lav:#c9bcf2;
+    --blue:#7fc4f2; --blue-soft:#d8ecfb; --mint:#7fd8c4; --yellow:#ffd166;
+    --ink:#4a4458; --ink-soft:#8d86a0; --card:#ffffff;
+    --shadow:0 8px 24px rgba(120,100,180,.14);
+    --radius:22px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    margin:0; color:var(--ink);
+    font-family:-apple-system,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
+    background:linear-gradient(135deg,#fdeef6 0%,#e8e4fb 30%,#dceafb 65%,#e3f7f0 100%);
+    background-attachment:fixed;
+    min-height:100vh;
+  }
+  button{font-family:inherit; color:inherit; cursor:pointer;}
+  input,select{font-family:inherit; color:inherit;}
+
+  /* ---------- Header ---------- */
+  header{
+    position:sticky; top:0; z-index:30;
+    display:flex; align-items:center; gap:14px;
+    padding:14px 22px;
+    background:rgba(255,255,255,.72);
+    backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+    box-shadow:0 2px 14px rgba(120,100,180,.10);
+  }
+  .brand{display:flex; align-items:center; gap:10px; min-width:0;}
+  .brand .logo{
+    width:42px; height:42px; border-radius:14px; flex:0 0 auto;
+    background:linear-gradient(135deg,#ffb6cf,#b7a8f5);
+    display:flex; align-items:center; justify-content:center;
+    font-size:22px; box-shadow:var(--shadow);
+  }
+  .brand h1{margin:0; font-size:21px; font-weight:800; letter-spacing:-.3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  #clock{margin-left:auto; text-align:right; font-size:15px; font-weight:700; color:var(--ink); font-variant-numeric:tabular-nums; white-space:nowrap;}
+  #clock small{display:block; font-size:11.5px; font-weight:600; color:var(--ink-soft);}
+  .hd-btns{display:flex; gap:8px; align-items:center;}
+  .btn{
+    border:none; border-radius:999px; padding:10px 16px;
+    font-size:13.5px; font-weight:700;
+    background:linear-gradient(135deg,#b7a8f5,#8f7ce8); color:#fff;
+    box-shadow:0 4px 12px rgba(143,124,232,.35);
+    transition:transform .12s ease;
+  }
+  .btn:active{transform:scale(.94);}
+  .btn.ghost{background:#fff; color:var(--ink); box-shadow:0 3px 10px rgba(120,100,180,.16);}
+  .sync-chip{
+    display:flex; align-items:center; gap:6px;
+    font-size:12px; font-weight:700; color:var(--ink-soft);
+    background:#f1eefb; border-radius:999px; padding:8px 13px; white-space:nowrap;
+  }
+  .sync-chip .dot{width:8px; height:8px; border-radius:50%; background:#b9b3cc;}
+  .sync-chip.on{background:#e2f7ee; color:#1d7a52;} .sync-chip.on .dot{background:#2fb871;}
+  .sync-chip.err{background:#fde8e8; color:#b03030;} .sync-chip.err .dot{background:#e05252;}
+
+  /* ---------- Layout ---------- */
+  main{
+    display:grid; gap:18px; padding:18px 22px 30px;
+    grid-template-columns:minmax(270px,315px) minmax(0,1fr) minmax(0,1fr) minmax(255px,300px);
+    align-items:start; max-width:1560px; margin:0 auto;
+  }
+  main .quest-area{grid-column:2/4; display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:start; min-width:0;}
+  .col{display:flex; flex-direction:column; gap:18px; min-width:0;}
+  .card{
+    background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:16px;
+  }
+  .card-head{display:flex; align-items:center; gap:8px; margin-bottom:10px;}
+  .card-head h2{margin:0; font-size:16.5px; font-weight:800; letter-spacing:-.2px;}
+  .card-head .count{margin-left:auto; font-size:12.5px; font-weight:700; color:var(--ink-soft); background:#f3f1fa; padding:4px 10px; border-radius:999px;}
+
+  /* ---------- Calendar ---------- */
+  .cal-top{display:flex; align-items:center; gap:6px; margin-bottom:8px;}
+  .cal-top h2{margin:0; font-size:17px; font-weight:800;}
+  .cal-top button{
+    border:none; background:#f1eefb; border-radius:12px; width:34px; height:34px;
+    font-size:15px; font-weight:800; color:var(--purple);
+  }
+  .cal-top .today-btn{margin-left:auto; width:auto; padding:0 12px; font-size:12px;}
+  .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:2px; text-align:center;}
+  .cal-dow{font-size:11px; font-weight:800; color:var(--ink-soft); padding:5px 0;}
+  .cal-dow:first-child{color:#e8708f;}
+  .cal-cell{
+    position:relative; aspect-ratio:1/1; display:flex; align-items:center; justify-content:center;
+    font-size:13.5px; font-weight:600; border-radius:12px; color:var(--ink);
+  }
+  .cal-cell .num{line-height:1;}
+  .cal-cell.dim{color:#c9c4d8;}
+  .cal-cell.sun .num{color:#e8708f;}
+  .cal-cell.today{background:linear-gradient(135deg,#ff9cbd,#e88ad0); color:#fff; font-weight:800; box-shadow:0 4px 10px rgba(232,138,208,.45);}
+  .cal-cell.today .num{color:#fff;}
+  .cal-cell .dots{position:absolute; bottom:4px; display:flex; gap:3px;}
+  .cal-cell .dots i{width:5px; height:5px; border-radius:50%; background:var(--pink);}
+  .cal-cell.today .dots i{background:#fff;}
+
+  /* ---------- D-Day ---------- */
+  #ddayList{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px;}
+  .dday-item{
+    display:flex; align-items:center; gap:10px; padding:10px 12px;
+    background:linear-gradient(135deg,#fbf5ff,#f2f0fd); border-radius:16px;
+  }
+  .dday-item .ico{font-size:20px; flex:0 0 auto;}
+  .dday-item .txt{min-width:0; flex:1;}
+  .dday-item .t{display:block; font-size:13.5px; font-weight:700; line-height:1.3; word-break:keep-all;}
+  .dday-item .d{display:block; font-size:11.5px; color:var(--ink-soft); font-weight:600; margin-top:2px;}
+  .dday-item .badge{
+    flex:0 0 auto; font-size:12px; font-weight:800; color:#fff; padding:5px 10px; border-radius:999px;
+    background:linear-gradient(135deg,#ff8fb2,#e88ad0);
+  }
+  .dday-item .badge.soon{background:linear-gradient(135deg,#ff6b6b,#ff8fb2);}
+  .dday-item .badge.after{background:#c9c4d8;}
+  .del-x{
+    border:none; background:transparent; color:#c9c4d8; font-size:16px; font-weight:800;
+    padding:4px 6px; flex:0 0 auto;
+  }
+  .del-x:active{color:#e05252;}
+  .add-form{display:flex; flex-direction:column; gap:8px; margin-top:12px;}
+  .add-form .row{display:flex; gap:8px;}
+  input[type=text],input[type=date]{
+    border:2px solid #efeaf8; background:#faf8fe; border-radius:14px;
+    padding:10px 12px; font-size:13.5px; min-width:0; width:100%;
+  }
+  input[type=text]:focus,input[type=date]:focus{outline:none; border-color:var(--lav);}
+  .add-btn{
+    border:none; border-radius:14px; flex:0 0 auto; width:44px;
+    background:linear-gradient(135deg,#ff9cbd,#e88ad0); color:#fff; font-size:22px; font-weight:800;
+    box-shadow:0 4px 12px rgba(232,138,208,.4);
+  }
+
+  /* ---------- Quest cards ---------- */
+  .kid-card{position:relative; overflow:hidden;}
+  .kid-top{display:flex; align-items:center; gap:12px;}
+  .avatar{
+    width:74px; height:74px; border-radius:22px; flex:0 0 auto; border:none; padding:4px;
+    background:linear-gradient(135deg,#fff2d8,#ffe3ee);
+    box-shadow:0 4px 12px rgba(200,160,200,.25);
+    transition:transform .15s ease;
+  }
+  .avatar:active{transform:scale(.9) rotate(-4deg);}
+  .avatar svg{width:100%; height:100%; display:block;}
+  .kid-id{min-width:0; flex:1;}
+  .kid-id .name-row{display:flex; align-items:center; gap:7px;}
+  .kid-id .name{font-size:18px; font-weight:800;}
+  .kid-id .cls{font-size:11.5px; font-weight:700; color:#fff; background:linear-gradient(135deg,#9fc7f5,#7fa9ef); padding:3px 9px; border-radius:999px; white-space:nowrap;}
+  .kid-id .sub{display:flex; align-items:center; gap:7px; margin-top:6px; flex-wrap:wrap;}
+  .lv{font-size:12.5px; font-weight:800; color:#8a5cd6; background:#efe6ff; padding:3px 9px; border-radius:999px;}
+  .dex{font-size:11.5px; font-weight:700; color:var(--ink-soft); background:#f3f1fa; padding:3px 9px; border-radius:999px;}
+  .egg-badge{font-size:11.5px; font-weight:700; color:#b0722a; background:#fff3dd; padding:3px 9px; border-radius:999px;}
+  .xp-wrap{display:flex; align-items:center; gap:8px; margin-top:8px;}
+  .xp-bar{flex:1; height:12px; background:#efeaf8; border-radius:999px; overflow:hidden;}
+  .xp-fill{height:100%; border-radius:999px; background:linear-gradient(90deg,#ffb05e,#ff8fb2,#b7a8f5); transition:width .5s cubic-bezier(.2,.8,.3,1.2); width:0%;}
+  .xp-num{font-size:12px; font-weight:800; color:var(--ink-soft); font-variant-numeric:tabular-nums;}
+  .q-head{display:flex; align-items:center; margin:13px 2px 8px;}
+  .q-head .t{font-size:13.5px; font-weight:800;}
+  .q-head .t b{color:var(--pink);}
+  .reset-day{margin-left:auto; border:none; background:transparent; font-size:12px; font-weight:700; color:#b9a8e0; text-decoration:underline; padding:4px;}
+  .quest-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; min-height:60px;}
+  .quest{
+    display:flex; align-items:center; gap:10px; padding:11px 12px;
+    border:2px solid #f1edf9; border-radius:16px; background:#fdfcff;
+    transition:background .2s, border-color .2s, opacity .2s;
+  }
+  .quest.done{background:#f2fbf5; border-color:#d9f2e2;}
+  .quest.done .qt{text-decoration:line-through; color:#9aa79f;}
+  .quest input[type=checkbox]{
+    appearance:none; -webkit-appearance:none; width:26px; height:26px; border-radius:9px;
+    border:2px solid #ddd5ef; background:#fff; flex:0 0 auto; position:relative; margin:0;
+  }
+  .quest input[type=checkbox]:checked{border-color:#63c98f; background:#63c98f;}
+  .quest input[type=checkbox]:checked::after{
+    content:""; position:absolute; left:7px; top:3px; width:7px; height:12px;
+    border:solid #fff; border-width:0 2.5px 2.5px 0; transform:rotate(42deg);
+  }
+  .quest .qt{flex:1; font-size:13.5px; font-weight:700; min-width:0; word-break:keep-all;}
+  .quest .pts{font-size:12px; font-weight:800; color:#ef8aab; flex:0 0 auto;}
+  .q-add{display:flex; gap:8px; margin-top:11px;}
+  .q-add input[type=text]{flex:1;}
+  .q-add select{
+    border:2px solid #efeaf8; background:#faf8fe; border-radius:14px;
+    padding:10px 8px; font-size:13px; font-weight:700; flex:0 0 auto;
+  }
+  .level-pop{
+    position:absolute; inset:0; z-index:5; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+    background:rgba(255,255,255,.88); backdrop-filter:blur(4px);
+    animation:fadePop .3s ease;
+  }
+  .level-pop .big{font-size:34px; font-weight:900; color:#8a5cd6; animation:bounceIn .6s cubic-bezier(.2,1.6,.4,1);}
+  .level-pop .emo{font-size:40px; animation:spinY 1.6s linear infinite;}
+  @keyframes bounceIn{0%{transform:scale(.2); opacity:0;}70%{transform:scale(1.15);}100%{transform:scale(1); opacity:1;}}
+  @keyframes spinY{from{transform:rotateY(0);}to{transform:rotateY(360deg);}}
+  @keyframes fadePop{from{opacity:0;}to{opacity:1;}}
+
+  /* ---------- Wishlist ---------- */
+  .wish-filters{display:flex; gap:6px; margin-bottom:10px;}
+  .chip{
+    border:none; background:#f3f1fa; color:var(--ink-soft); font-size:12px; font-weight:700;
+    padding:6px 12px; border-radius:999px;
+  }
+  .chip.on{background:linear-gradient(135deg,#ff9cbd,#e88ad0); color:#fff;}
+  #wishList{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; min-height:60px;}
+  .wish{
+    display:flex; align-items:flex-start; gap:10px; padding:11px 12px;
+    border:2px solid #f1edf9; border-radius:16px; background:#fdfcff;
+  }
+  .wish.done{background:#f7f5fb; opacity:.65;}
+  .wish.done .wt{text-decoration:line-through;}
+  .wish input[type=checkbox]{
+    appearance:none; -webkit-appearance:none; width:24px; height:24px; border-radius:8px;
+    border:2px solid #ddd5ef; background:#fff; flex:0 0 auto; position:relative; margin:0;
+  }
+  .wish input[type=checkbox]:checked{border-color:#b7a8f5; background:#b7a8f5;}
+  .wish input[type=checkbox]:checked::after{
+    content:""; position:absolute; left:6px; top:2px; width:7px; height:12px;
+    border:solid #fff; border-width:0 2.5px 2.5px 0; transform:rotate(42deg);
+  }
+  .wish .body{flex:1; min-width:0;}
+  .wish .wt{font-size:13.5px; font-weight:700; word-break:keep-all;}
+  .wish .memo{font-size:12px; color:var(--ink-soft); font-weight:600; margin-top:2px; word-break:keep-all;}
+  .wish .who{font-size:11px; font-weight:800; padding:2px 8px; border-radius:999px; flex:0 0 auto; margin-top:2px;}
+  .wish .who.rahee{background:#ffe3ee; color:#d4548a;}
+  .wish .who.raeun{background:#dcecfb; color:#3d7cc9;}
+  .empty{font-size:12.5px; color:#c1bbd3; font-weight:600; text-align:center; padding:16px 8px; line-height:1.5;}
+  .wish .w-add select{border:2px solid #efeaf8; background:#faf8fe; border-radius:14px; padding:10px 8px; font-size:13px; font-weight:700; flex:0 0 auto;}
+
+  /* ---------- Standby ---------- */
+  #standby{
+    position:fixed; inset:0; z-index:100; display:flex; flex-direction:column;
+    background:linear-gradient(160deg,#2b2545 0%,#3d3566 55%,#4a3d7a 100%);
+    color:#fff; padding:6vh 6vw; align-items:center; justify-content:center; gap:20px;
+  }
+  #standby[hidden]{display:none;}
+  #standby .clock{font-size:min(15vw,120px); font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:2px; line-height:1;}
+  #standby .date{font-size:min(4vw,24px); font-weight:600; color:#cfc6f2;}
+  .sb-panels{display:flex; gap:18px; flex-wrap:wrap; justify-content:center; width:100%; max-width:1000px;}
+  .sb-panel{background:rgba(255,255,255,.10); border-radius:20px; padding:16px 22px; min-width:220px; flex:1; max-width:460px;}
+  .sb-panel h3{margin:0 0 10px; font-size:14px; font-weight:800; color:#e8defc; letter-spacing:.5px;}
+  .sb-row{display:flex; justify-content:space-between; gap:12px; font-size:14px; padding:5px 0; font-weight:600;}
+  .sb-row .b{color:#ffd166; font-weight:800; white-space:nowrap;}
+  .sb-bar{height:8px; background:rgba(255,255,255,.2); border-radius:999px; overflow:hidden; margin-top:4px;}
+  .sb-bar i{display:block; height:100%; background:linear-gradient(90deg,#ffd166,#ff9cbd); border-radius:999px;}
+  #standby .exit{
+    position:absolute; top:22px; right:22px; border:none; border-radius:999px; padding:12px 20px;
+    background:rgba(255,255,255,.15); color:#fff; font-size:14px; font-weight:700;
+  }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width:1180px){
+    main{grid-template-columns:minmax(250px,300px) minmax(0,1fr); }
+    main .quest-area{grid-column:2; display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:start;}
+    main .wish-area{grid-column:1 / -1;}
+  }
+  @media (max-width:760px){
+    main{grid-template-columns:1fr; padding:14px;}
+    main .quest-area{grid-column:1; grid-template-columns:1fr;}
+    main .wish-area{grid-column:1;}
+    header{padding:12px 14px; flex-wrap:wrap;}
+    #clock{font-size:13px;}
+    .brand h1{font-size:17px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="logo">🏠</div>
+    <h1>라라랜드 대시보드</h1>
+  </div>
+  <div id="clock"><small>loading…</small>&nbsp;</div>
+  <div class="hd-btns">
+    <div class="sync-chip" id="syncChip"><span class="dot"></span><span id="syncText">로컬 저장 모드</span></div>
+    <button class="btn ghost" id="standbyBtn">대기화면</button>
+    <button class="btn ghost" id="resetAllBtn">초기화</button>
+  </div>
+</header>
+
+<main>
+  <!-- 좌측: 달력 + D-Day -->
+  <div class="col">
+    <div class="card" id="calCard">
+      <div class="cal-top">
+        <button id="calPrev" aria-label="이전 달">‹</button>
+        <h2 id="calTitle"></h2>
+        <button id="calNext" aria-label="다음 달">›</button>
+        <button id="calToday" class="today-btn">오늘</button>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>📅 D-Day</h2><span class="count" id="ddayCount"></span></div>
+      <ul id="ddayList"></ul>
+      <div class="add-form">
+        <div class="row">
+          <input type="date" id="ddayDate" aria-label="날짜">
+        </div>
+        <div class="row">
+          <input type="text" id="ddayTitle" placeholder="새 D-Day 추가 (예: 견학일)" aria-label="D-Day 제목">
+          <button class="add-btn" id="ddayAdd" aria-label="D-Day 추가">+</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 가운데: 아이별 퀘스트 -->
+  <div class="quest-area" id="questArea"></div>
+
+  <!-- 우측: 위시리스트 -->
+  <div class="col wish-area">
+    <div class="card">
+      <div class="card-head"><h2>🛒 엄마 이거 사주세요</h2><span class="count" id="wishCount"></span></div>
+      <div class="wish-filters" id="wishFilters">
+        <button class="chip on" data-f="all">전체</button>
+        <button class="chip" data-f="라희">라희</button>
+        <button class="chip" data-f="라은">라은</button>
+      </div>
+      <ul id="wishList"></ul>
+      <div class="add-form">
+        <div class="row">
+          <input type="text" id="wishTitle" placeholder="갖고 싶은 것 · 필요한 것" aria-label="위시리스트 항목">
+        </div>
+        <div class="row w-add">
+          <select id="wishWho" aria-label="아이 선택">
+            <option value="라희">라희</option>
+            <option value="라은">라은</option>
+          </select>
+          <input type="text" id="wishMemo" placeholder="메모 · 가격" aria-label="메모 또는 가격">
+          <button class="add-btn" id="wishAdd" aria-label="위시리스트 추가">+</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- 대기화면 -->
+<div id="standby" hidden>
+  <button class="exit" id="standbyExit">✕ 화면으로 돌아가기</button>
+  <div class="clock" id="sbClock">--:--</div>
+  <div class="date" id="sbDate"></div>
+  <div class="sb-panels">
+    <div class="sb-panel">
+      <h3>⭐ 오늘의 퀘스트</h3>
+      <div id="sbQuests"></div>
+    </div>
+    <div class="sb-panel">
+      <h3>📅 다가오는 D-Day</h3>
+      <div id="sbDdays"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   🔄 동기화 설정 (Firebase Realtime Database)
+   ------------------------------------------------------------
+   여러 아이패드에서 실시간 동기화를 켜려면 아래 databaseURL 에
+   Firebase Realtime Database 주소만 넣으면 됩니다. 빌드 필요 없음.
+   (Firebase 콘솔 → Realtime Database → URL 복사,
+    Rules 읽기/쓰기 허용 후 가족만 아는 URL이니 보안 유의)
+
+   예)
+   const FIREBASE_CONFIG = {
+     databaseURL: "https://내프로젝트-default-rtdb.asia-southeast1.firebasedatabase.app"
+   };
+
+   비워 두면 각 기기의 localStorage(로컬 저장 모드)로 동작합니다.
+   ============================================================ */
+const FIREBASE_CONFIG = {
+  databaseURL: "https://raraland-default-rtdb.firebaseio.com"   // ← 여기에 Firebase Realtime Database URL 입력
+};
+const SYNC_PATH = "lalaland-dashboard";  // DB 안에서 사용할 노드 이름
+
+/* ---------- 기본 데이터 ---------- */
+const DEFAULT_STATE = () => ({
+  dd: [
+    { id:uid(), date:"2026-11-20", icon:"👗", title:"칠드런데이 파란 옷 & 기부금 20바트" },
+    { id:uid(), date:"2026-11-20", icon:"💉", title:"독감 백신 접종 (14:00)" },
+    { id:uid(), date:"2026-11-24", icon:"👕", title:"러이크라통 옷 입기" },
+    { id:uid(), date:"2026-11-30", icon:"🎓", title:"라은 학교 발표회 (08:00)" },
+    { id:uid(), date:"2026-12-01", icon:"💃", title:"라희 댄스 발표 (16:30)" },
+    { id:uid(), date:"2026-12-02", icon:"🏫", title:"라희 학교 발표회 (08:30)" }
+  ],
+  kids: {
+    stella: {
+      name:"라희", cls:"Stella · Y5A", avatar:0, lv:1, xp:65, dex:0, eggs:0,
+      quests:[
+        { id:uid(), t:"영어책 읽기", p:20, done:false },
+        { id:uid(), t:"바이올린 연습", p:30, done:false },
+        { id:uid(), t:"내일 가방 챙기기", p:20, done:false },
+        { id:uid(), t:"방 정리 5분", p:20, done:false },
+        { id:uid(), t:"양치 깨끗이", p:15, done:false }
+      ]
+    },
+    ella: {
+      name:"라은", cls:"Ella · FS3 Jaguars", avatar:1, lv:1, xp:55, dex:0, eggs:0,
+      quests:[
+        { id:uid(), t:"유치원 기분 좋게 등원", p:20, done:false },
+        { id:uid(), t:"그림책 보기", p:20, done:false },
+        { id:uid(), t:"밥 씩씩하게 먹기", p:20, done:false },
+        { id:uid(), t:"장난감 제자리에", p:20, done:false },
+        { id:uid(), t:"손 씻기", p:15, done:false }
+      ]
+    }
+  },
+  wish: []
+});
+
+/* ---------- 유틸 ---------- */
+function uid(){ return Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4); }
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+const BKK = "Asia/Bangkok";
+const fmt = new Intl.DateTimeFormat("ko-KR",{timeZone:BKK,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:true,weekday:"short"});
+function bkkNow(){
+  const p = {};
+  for (const x of fmt.formatToParts(new Date())) p[x.type] = x.value;
+  const weekday = p.weekday ? p.weekday.replace("요일","") : "";
+  return {
+    y:+p.year, m:+p.month, d:+p.day,
+    weekday,
+    ampm:p.dayPeriod || "", hh:p.hour, mm:p.minute, ss:p.second,
+    dateStr:`${p.year}-${p.month}-${p.day}`
+  };
+}
+function ymd(y,m,d){ return `${y}-${String(m).padStart(2,"0")}-${String(d).padStart(2,"0")}`; }
+function ddayBadge(dateStr){
+  const n = bkkNow();
+  const [ty,tm,td] = dateStr.split("-").map(Number);
+  const a = Date.UTC(n.y, n.m-1, n.d), b = Date.UTC(ty, tm-1, td);
+  const diff = Math.round((b-a)/86400000);
+  if (diff === 0) return {label:"D-Day", cls:"soon"};
+  if (diff > 0)  return {label:"D-"+diff, cls: diff<=3 ? "soon" : ""};
+  return {label:"D+"+(-diff), cls:"after"};
+}
+
+/* ---------- 상태 & 저장 ---------- */
+const LS_KEY = "lalaland-dashboard-v1";
+let state = load();
+let saveTimer = null;
+
+function load(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw){
+      const s = JSON.parse(raw);
+      if (s && s.kids && s.dd) return s;
+    }
+  }catch(e){}
+  const d = DEFAULT_STATE();
+  persistLocal(d);
+  return d;
+}
+function persistLocal(s){
+  try{
+    const clean = JSON.parse(JSON.stringify(s, (k,v)=> k==="_celebrate" ? undefined : v));
+    localStorage.setItem(LS_KEY, JSON.stringify(clean));
+  }catch(e){}
+}
+/* 로컬 + (설정 시) 클라우드에 저장. 화면 갱신은 호출부에서. */
+function save(){
+  persistLocal(state);
+  Sync.push();
+}
+
+/* ---------- 실시간 동기화 (Firebase) ---------- */
+const Sync = {
+  mode:"local", lastJson:"", ref:null,
+  init(){
+    const url = (FIREBASE_CONFIG && FIREBASE_CONFIG.databaseURL || "").trim();
+    if (!url){ this.setChip("local"); return; }
+    this.setChip("loading");
+    const appDb = document.createElement("script"); appDb.src = "https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js";
+    const db = document.createElement("script"); db.src = "https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js";
+    const go = () => {
+      try{
+        firebase.initializeApp({ databaseURL: url });
+        this.ref = firebase.database().ref(SYNC_PATH);
+        this.ref.on("value", snap => {
+          const v = snap.val();
+          if (!v){ this.ref.set(state); return; }              // 처음: 로컬 상태를 클라우드로
+          const json = JSON.stringify(v);
+          if (json === this.lastJson) return;                   // 내가 방금 쓴 것
+          state = Object.assign(DEFAULT_STATE(), v);
+          this.lastJson = json;
+          persistLocal(state);
+          renderAll();
+          this.setChip("on");
+        }, err => { console.warn(err); this.setChip("err"); });
+        this.setChip("on");
+      }catch(e){ console.warn(e); this.setChip("err"); }
+    };
+    let loaded = 0;
+    const done = () => { if (++loaded === 2) go(); };
+    appDb.onload = done; db.onload = done;
+    appDb.onerror = () => { this.setChip("err"); };
+    db.onerror = () => { this.setChip("err"); };
+    document.head.appendChild(appDb); document.head.appendChild(db);
+  },
+  push(){
+    if (!this.ref) return;
+    this.lastJson = JSON.stringify(state);
+    this.ref.set(state).catch(() => this.setChip("err"));
+  },
+  setChip(m){
+    const chip = document.getElementById("syncChip"), t = document.getElementById("syncText");
+    chip.classList.remove("on","err");
+    chip.onclick = null;
+    if (m === "on"){ chip.classList.add("on"); t.textContent = "🟢 실시간 동기화"; }
+    else if (m === "err"){
+      chip.classList.add("err"); t.textContent = "동기화 오류 · 로컬 저장 중";
+      chip.onclick = () => alert("클라우드 실시간 동기화에 연결하지 못했습니다.\n\n· 지금은 각 기기의 저장소(로컬)로 정상 동작합니다.\n· Firebase 콘솔에서 Realtime Database의 규칙(읽기/쓰기 권한)을 확인해 주세요.\n· 테스트 모드 기간이 지났다면 규칙을 허용으로 바꾸면 바로 다시 연결됩니다.\n\n페이지를 새로 고치면 다시 시도합니다.");
+    }
+    else if (m === "loading"){ t.textContent = "동기화 연결 중…"; }
+    else { t.textContent = "로컬 저장 모드"; }
+  }
+};
+
+/* ---------- 귀여운 캐릭터 SVG (저작권 걱정 없는 오리지널 몬스터) ---------- */
+const AVATARS = [
+  { name:"불꽃이", svg:`
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="50" cy="58" rx="34" ry="32" fill="#ffb057"/>
+      <ellipse cx="50" cy="64" rx="26" ry="24" fill="#ffd9a8"/>
+      <path d="M50 6 C60 18 58 24 50 32 C42 24 40 18 50 6 Z" fill="#ff8a4c"/>
+      <path d="M20 34 C14 42 16 50 24 52 C26 44 24 38 20 34 Z" fill="#ff8a4c"/>
+      <path d="M80 34 C86 42 84 50 76 52 C74 44 76 38 80 34 Z" fill="#ff8a4c"/>
+      <circle cx="38" cy="54" r="8" fill="#fff"/><circle cx="62" cy="54" r="8" fill="#fff"/>
+      <circle cx="40" cy="55" r="4" fill="#4a3020"/><circle cx="60" cy="55" r="4" fill="#4a3020"/>
+      <circle cx="41.5" cy="53.5" r="1.4" fill="#fff"/><circle cx="61.5" cy="53.5" r="1.4" fill="#fff"/>
+      <circle cx="30" cy="66" r="4" fill="#ff9e9e" opacity=".7"/><circle cx="70" cy="66" r="4" fill="#ff9e9e" opacity=".7"/>
+      <path d="M44 68 Q50 73 56 68" stroke="#4a3020" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+      <path d="M64 80 Q72 74 78 80 Q74 88 64 84 Z" fill="#ff8a4c"/>
+    </svg>` },
+  { name:"번개이", svg:`
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="50" cy="58" rx="34" ry="32" fill="#ffd94d"/>
+      <path d="M26 34 C20 18 30 12 34 22 C38 14 46 16 42 28 Z" fill="#ffd94d"/>
+      <path d="M74 34 C80 18 70 12 66 22 C62 14 54 16 58 28 Z" fill="#ffd94d"/>
+      <path d="M22 26 C16 18 24 12 30 20 Z" fill="#3a2e14"/><path d="M78 26 C84 18 76 12 70 20 Z" fill="#3a2e14"/>
+      <ellipse cx="50" cy="66" rx="24" ry="22" fill="#fff3b8"/>
+      <circle cx="38" cy="54" r="8" fill="#fff"/><circle cx="62" cy="54" r="8" fill="#fff"/>
+      <circle cx="39" cy="55" r="4" fill="#3a2e14"/><circle cx="61" cy="55" r="4" fill="#3a2e14"/>
+      <circle cx="40.5" cy="53.5" r="1.4" fill="#fff"/><circle cx="62.5" cy="53.5" r="1.4" fill="#fff"/>
+      <circle cx="29" cy="65" r="4" fill="#ffb0c8" opacity=".8"/><circle cx="71" cy="65" r="4" fill="#ffb0c8" opacity=".8"/>
+      <path d="M45 67 Q50 72 55 67" stroke="#3a2e14" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+      <path d="M66 82 L78 74 L72 82 L82 84 L66 94 L70 85 Z" fill="#ffca28"/>
+    </svg>` },
+  { name:"방울이", svg:`
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="50" cy="58" rx="34" ry="32" fill="#7fd8c4"/>
+      <path d="M50 10 C58 16 58 24 50 28 C42 24 42 16 50 10 Z" fill="#3fae94"/>
+      <ellipse cx="50" cy="64" rx="26" ry="24" fill="#c8f2e6"/>
+      <circle cx="38" cy="54" r="8" fill="#fff"/><circle cx="62" cy="54" r="8" fill="#fff"/>
+      <circle cx="39" cy="55" r="4" fill="#1f5c4c"/><circle cx="61" cy="55" r="4" fill="#1f5c4c"/>
+      <circle cx="40.5" cy="53.5" r="1.4" fill="#fff"/><circle cx="62.5" cy="53.5" r="1.4" fill="#fff"/>
+      <circle cx="29" cy="65" r="4" fill="#ffb0c8" opacity=".8"/><circle cx="71" cy="65" r="4" fill="#ffb0c8" opacity=".8"/>
+      <path d="M45 67 Q50 72 55 67" stroke="#1f5c4c" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+      <circle cx="24" cy="30" r="3" fill="#a9e8da"/><circle cx="76" cy="26" r="2.4" fill="#a9e8da"/>
+    </svg>` }
+];
+
+/* ---------- 달력 ---------- */
+let calY, calM;   // 표시 중인 연/월
+(function initCal(){
+  const n = bkkNow(); calY = n.y; calM = n.m;
+})();
+function renderCal(){
+  document.getElementById("calTitle").textContent = `${calY}년 ${calM}월`;
+  const grid = document.getElementById("calGrid");
+  const today = bkkNow().dateStr;
+  const first = new Date(calY, calM-1, 1).getDay();           // 0=일
+  const last = new Date(calY, calM, 0).getDate();
+  let html = ["일","월","화","수","목","금","토"].map(d=>`<div class="cal-dow">${d}</div>`).join("");
+  for (let i=0;i<first;i++) html += `<div class="cal-cell"></div>`;
+  for (let d=1; d<=last; d++){
+    const ds = ymd(calY,calM,d);
+    const dow = new Date(calY,calM-1,d).getDay();
+    const cls = ["cal-cell"];
+    if (ds === today) cls.push("today");
+    if (dow === 0 && ds !== today) cls.push("sun");
+    const dots = state.dd.filter(x=>x.date===ds);
+    const dotHtml = dots.length ? `<span class="dots">${dots.slice(0,3).map(()=>"<i></i>").join("")}</span>` : "";
+    html += `<div class="${cls.join(" ")}"><span class="num">${d}</span>${dotHtml}</div>`;
+  }
+  grid.innerHTML = html;
+}
+document.getElementById("calPrev").onclick = ()=>{ calM--; if(calM<1){calM=12;calY--;} renderCal(); };
+document.getElementById("calNext").onclick = ()=>{ calM++; if(calM>12){calM=1;calY++;} renderCal(); };
+document.getElementById("calToday").onclick = ()=>{ const n=bkkNow(); calY=n.y; calM=n.m; renderCal(); };
+
+/* ---------- D-Day ---------- */
+function renderDday(){
+  const n = bkkNow();
+  const items = [...state.dd].sort((a,b)=> a.date.localeCompare(b.date));
+  document.getElementById("ddayCount").textContent = `${items.length}개`;
+  const ul = document.getElementById("ddayList");
+  if (!items.length){ ul.innerHTML = `<div class="empty">등록된 D-Day가 없어요<br>아래에서 새로 추가해 보세요 📅</div>`; return; }
+  ul.innerHTML = items.map(x=>{
+    const b = ddayBadge(x.date);
+    const [,tm,td] = x.date.split("-").map(Number);
+    const dow = ["일","월","화","수","목","금","토"][new Date(x.date+"T00:00:00").getDay()];
+    return `<li class="dday-item">
+      <span class="ico">${esc(x.icon||"📌")}</span>
+      <span class="txt"><span class="t">${esc(x.title)}</span><span class="d">${tm}/${td} (${dow})${x.date<n.date?" · 지남":""}</span></span>
+      <span class="badge ${b.cls}">${b.label}</span>
+      <button class="del-x" data-dday="${x.id}" aria-label="삭제">✕</button>
+    </li>`;
+  }).join("");
+}
+document.getElementById("ddayList").addEventListener("click", e=>{
+  const id = e.target.closest("[data-dday]")?.dataset.dday;
+  if (!id) return;
+  state.dd = state.dd.filter(x=>x.id!==id);
+  save(); renderAll();
+});
+document.getElementById("ddayAdd").onclick = ()=>{
+  const date = document.getElementById("ddayDate").value;
+  const title = document.getElementById("ddayTitle").value.trim();
+  if (!date || !title) return;
+  state.dd.push({id:uid(), date, icon:"📌", title});
+  document.getElementById("ddayTitle").value = "";
+  save(); renderAll();
+};
+
+/* ---------- 퀘스트 카드 ---------- */
+function kidProgress(k){
+  const total = k.quests.length, done = k.quests.filter(q=>q.done).length;
+  return {total, done};
+}
+function renderQuests(){
+  const area = document.getElementById("questArea");
+  area.innerHTML = Object.entries(state.kids).map(([key,k])=>{
+    const av = AVATARS[k.avatar % AVATARS.length];
+    const prog = kidProgress(k);
+    const allDone = prog.total>0 && prog.done===prog.total;
+    return `<div class="card kid-card" data-kid="${key}">
+      ${k._celebrate ? `<div class="level-pop"><span class="emo">🎉✨</span><span class="big">LEVEL UP! Lv.${k.lv}</span><span style="font-weight:700;color:#6d5a9e">도감 +1 · 올클리어 알 +1 🥚</span></div>` : ""}
+      <div class="kid-top">
+        <button class="avatar" data-act="avatar" title="캐릭터 바꾸기">${av.svg}</button>
+        <div class="kid-id">
+          <div class="name-row">
+            <span class="name">${esc(k.name)}</span>
+            <span class="cls">${esc(k.cls)}</span>
+          </div>
+          <div class="sub">
+            <span class="lv">Lv.${k.lv}</span>
+            <span class="dex">도감 ${k.dex}</span>
+            <span class="egg-badge">올클리어 알 ${k.eggs}</span>
+            ${allDone ? `<span class="egg-badge" style="background:#e2f7ee;color:#1d7a52">🌟 올클리어!</span>` : ""}
+          </div>
+          <div class="xp-wrap">
+            <div class="xp-bar"><div class="xp-fill" style="width:${k.xp}%"></div></div>
+            <span class="xp-num">${k.xp}/100</span>
+          </div>
+        </div>
+      </div>
+      <div class="q-head">
+        <span class="t">⭐ 오늘의 퀘스트 <b>${prog.done}/${prog.total}</b></span>
+        <button class="reset-day" data-act="resetDay">하루 초기화</button>
+      </div>
+      <ul class="quest-list" data-qkey="${key}">
+        ${k.quests.length ? k.quests.map(q=>`
+          <li class="quest ${q.done?"done":""}">
+            <input type="checkbox" data-q="${q.id}" ${q.done?"checked":""} aria-label="${esc(q.t)}">
+            <span class="qt">${esc(q.t)}</span>
+            <span class="pts">+${q.p}</span>
+            <button class="del-x" data-qdel="${q.id}" aria-label="퀘스트 삭제">✕</button>
+          </li>`).join("") : `<li class="empty">퀘스트를 추가해 보세요 ✏️</li>`}
+      </ul>
+      <div class="q-add">
+        <input type="text" placeholder="퀘스트 추가" data-qnew aria-label="새 퀘스트">
+        <select data-qpts aria-label="점수 선택">
+          <option value="10">+10</option><option value="15">+15</option>
+          <option value="20" selected>+20</option><option value="30">+30</option>
+        </select>
+        <button class="add-btn" data-act="addQuest" aria-label="퀘스트 추가">+</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+/* 레벨업 축하 표시 자동 정리 */
+setInterval(()=>{
+  let dirty = false;
+  for (const k of Object.values(state.kids)){ if (k._celebrate){ k._celebrate = false; dirty = true; } }
+  if (dirty){ renderQuests(); }
+}, 3200);
+
+function toggleQuest(key, qid, checked){
+  const k = state.kids[key];
+  const q = k.quests.find(x=>x.id===qid);
+  if (!q) return;
+  if (q.done === checked) return;
+  q.done = checked;
+  if (checked){
+    k.xp += q.p;
+    while (k.xp >= 100){
+      k.xp -= 100; k.lv += 1; k.dex += 1; k.eggs += 1;
+      k._celebrate = true;
+      setTimeout(()=>{ renderQuests(); }, 10);
+    }
+  } else {
+    k.xp = Math.max(0, k.xp - q.p);
+  }
+  save(); renderAll();
+}
+
+document.getElementById("questArea").addEventListener("change", e=>{
+  const cb = e.target.closest("input[type=checkbox][data-q]");
+  if (!cb) return;
+  const key = cb.closest("[data-kid]").dataset.kid;
+  toggleQuest(key, cb.dataset.q, cb.checked);
+});
+document.getElementById("questArea").addEventListener("click", e=>{
+  const card = e.target.closest("[data-kid]"); if (!card) return;
+  const key = card.dataset.kid, k = state.kids[key];
+  const act = e.target.closest("[data-act]")?.dataset.act;
+  if (act === "avatar"){ k.avatar = (k.avatar+1) % AVATARS.length; save(); renderQuests(); }
+  else if (act === "resetDay"){
+    k.quests.forEach(q=>q.done=false);
+    k.xp = 0;
+    save(); renderAll();
+  }
+  else if (act === "addQuest"){
+    const inp = card.querySelector("[data-qnew]");
+    const t = inp.value.trim(); if (!t) return;
+    const p = +card.querySelector("[data-qpts]").value;
+    k.quests.push({id:uid(), t, p, done:false});
+    save(); renderAll();
+  }
+  else if (e.target.closest("[data-qdel]")){
+    const id = e.target.closest("[data-qdel]").dataset.qdel;
+    k.quests = k.quests.filter(q=>q.id!==id);
+    save(); renderAll();
+  }
+});
+document.getElementById("questArea").addEventListener("keydown", e=>{
+  if (e.key !== "Enter") return;
+  const inp = e.target.closest("[data-qnew]"); if (!inp) return;
+  const card = inp.closest("[data-kid]"), k = state.kids[card.dataset.kid];
+  const t = inp.value.trim(); if (!t) return;
+  const p = +card.querySelector("[data-qpts]").value;
+  k.quests.push({id:uid(), t, p, done:false});
+  save(); renderAll();
+});
+
+/* ---------- 위시리스트 ---------- */
+let wishFilter = "all";
+function renderWish(){
+  const ul = document.getElementById("wishList");
+  const all = state.wish || [];
+  const shown = wishFilter==="all" ? all : all.filter(w=>w.who===wishFilter);
+  document.getElementById("wishCount").textContent = `${all.filter(w=>!w.done).length}개 남음`;
+  if (!shown.length){ ul.innerHTML = `<div class="empty">갖고 싶은 것을 추가해 보세요 🛒</div>`; return; }
+  ul.innerHTML = shown.map(w=>`
+    <li class="wish ${w.done?"done":""}">
+      <input type="checkbox" data-w="${w.id}" ${w.done?"checked":""} aria-label="구매 완료">
+      <span class="body">
+        <span class="wt">${esc(w.t)}</span>
+        ${w.memo?`<div class="memo">${esc(w.memo)}</div>`:""}
+      </span>
+      <span class="who ${w.who==="라희"?"rahee":"raeun"}">${esc(w.who)}</span>
+      <button class="del-x" data-wdel="${w.id}" aria-label="삭제">✕</button>
+    </li>`).join("");
+}
+document.getElementById("wishFilters").addEventListener("click", e=>{
+  const b = e.target.closest(".chip"); if (!b) return;
+  wishFilter = b.dataset.f;
+  document.querySelectorAll("#wishFilters .chip").forEach(c=>c.classList.toggle("on", c===b));
+  renderWish();
+});
+document.getElementById("wishList").addEventListener("change", e=>{
+  const cb = e.target.closest("input[type=checkbox][data-w]"); if (!cb) return;
+  const w = (state.wish||[]).find(x=>x.id===cb.dataset.w); if (!w) return;
+  w.done = cb.checked; save(); renderWish();
+});
+document.getElementById("wishList").addEventListener("click", e=>{
+  const del = e.target.closest("[data-wdel]"); if (!del) return;
+  state.wish = (state.wish||[]).filter(x=>x.id!==del.dataset.wdel);
+  save(); renderWish();
+});
+document.getElementById("wishAdd").onclick = ()=>{
+  const t = document.getElementById("wishTitle").value.trim();
+  if (!t) return;
+  const who = document.getElementById("wishWho").value;
+  const memo = document.getElementById("wishMemo").value.trim();
+  (state.wish = state.wish || []).push({id:uid(), t, who, memo, done:false});
+  document.getElementById("wishTitle").value = "";
+  document.getElementById("wishMemo").value = "";
+  save(); renderAll();
+};
+document.getElementById("wishTitle").addEventListener("keydown", e=>{ if(e.key==="Enter") document.getElementById("wishAdd").click(); });
+document.getElementById("wishMemo").addEventListener("keydown", e=>{ if(e.key==="Enter") document.getElementById("wishAdd").click(); });
+
+/* ---------- 시계 ---------- */
+function tick(){
+  const n = bkkNow();
+  document.getElementById("clock").innerHTML =
+    `<small>${n.y}년 ${n.m}월 ${n.d}일 (${n.weekday})</small>${n.ampm} ${n.hh}:${n.mm}:${n.ss}`;
+  document.getElementById("sbClock").textContent = `${n.hh}:${n.mm}`;
+  document.getElementById("sbDate").textContent = `${n.y}년 ${n.m}월 ${n.d}일 ${n.weekday}요일 · 라라랜드 대시보드`;
+  renderStandby();
+}
+setInterval(tick, 1000);
+
+/* ---------- 대기화면 ---------- */
+function renderStandby(){
+  const sb = document.getElementById("standby");
+  if (sb.hidden) return;
+  document.getElementById("sbQuests").innerHTML = Object.values(state.kids).map(k=>{
+    const p = kidProgress(k);
+    const pct = p.total ? Math.round(p.done/p.total*100) : 0;
+    return `<div class="sb-row"><span>${esc(k.name)} <small style="color:#b9aede">Lv.${k.lv}</small></span><span class="b">${p.done}/${p.total}</span></div>
+            <div class="sb-bar"><i style="width:${pct}%"></i></div>`;
+  }).join("");
+  const up = [...state.dd].map(x=>({...x, ...{b:ddayBadge(x.date)}})).filter(x=>x.b.cls!=="after").sort((a,b)=>a.date.localeCompare(b.date)).slice(0,4);
+  document.getElementById("sbDdays").innerHTML = up.length
+    ? up.map(x=>`<div class="sb-row"><span>${esc(x.icon||"📌")} ${esc(x.title)}</span><span class="b">${x.b.label}</span></div>`).join("")
+    : `<div class="sb-row"><span>다가오는 일정이 없어요</span></div>`;
+}
+document.getElementById("standbyBtn").onclick = ()=>{
+  document.getElementById("standby").hidden = false; renderStandby();
+};
+document.getElementById("standbyExit").onclick = ()=>{ document.getElementById("standby").hidden = true; };
+document.getElementById("standby").addEventListener("click", e=>{
+  if (e.target.id === "standby") document.getElementById("standby").hidden = true;
+});
+
+/* ---------- 전체 초기화 ---------- */
+document.getElementById("resetAllBtn").onclick = ()=>{
+  if (!confirm("모든 기록(퀘스트·레벨·D-Day·위시리스트)을 처음 상태로 되돌릴까요?")) return;
+  state = DEFAULT_STATE();
+  save(); renderAll();
+};
+
+/* ---------- 렌더 ---------- */
+function renderAll(){ renderCal(); renderDday(); renderQuests(); renderWish(); tick(); }
+
+Sync.init();
+renderAll();
+</script>
+</body>
+</html>
