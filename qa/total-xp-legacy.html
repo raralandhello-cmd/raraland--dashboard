@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>[QA] 누적 점수 예전 데이터 호환</title>
+<style>
+  :root{
+    --pink:#ff8fb2; --pink-soft:#ffd6e4; --purple:#9b8ce0; --lav:#c9bcf2;
+    --blue:#7fc4f2; --blue-soft:#d8ecfb; --mint:#7fd8c4; --yellow:#ffd166;
+    --ink:#4a4458; --ink-soft:#8d86a0; --card:#ffffff;
+    --shadow:0 8px 24px rgba(120,100,180,.14);
+    --radius:22px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    margin:0; color:var(--ink);
+    font-family:-apple-system,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
+    background:linear-gradient(135deg,#fdeef6 0%,#e8e4fb 30%,#dceafb 65%,#e3f7f0 100%);
+    background-attachment:fixed;
+    min-height:100vh;
+  }
+  button{font-family:inherit; color:inherit; cursor:pointer;}
+  input,select{font-family:inherit; color:inherit;}
+
+  /* ---------- Header ---------- */
+  header{
+    position:sticky; top:0; z-index:30;
+    display:flex; align-items:center; gap:14px;
+    padding:14px 22px;
+    background:rgba(255,255,255,.72);
+    backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+    box-shadow:0 2px 14px rgba(120,100,180,.10);
+  }
+  .brand{display:flex; align-items:center; gap:10px; min-width:0;}
+  .brand .logo{
+    width:42px; height:42px; border-radius:14px; flex:0 0 auto;
+    background:linear-gradient(135deg,#ffb6cf,#b7a8f5);
+    display:flex; align-items:center; justify-content:center;
+    font-size:22px; box-shadow:var(--shadow);
+  }
+  .brand h1{margin:0; font-size:21px; font-weight:800; letter-spacing:-.3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  #clock{margin-left:auto; text-align:right; font-size:15px; font-weight:700; color:var(--ink); font-variant-numeric:tabular-nums; white-space:nowrap;}
+  #clock small{display:block; font-size:11.5px; font-weight:600; color:var(--ink-soft);}
+  .hd-btns{display:flex; gap:8px; align-items:center;}
+  .btn{
+    border:none; border-radius:999px; padding:10px 16px;
+    font-size:13.5px; font-weight:700;
+    background:linear-gradient(135deg,#b7a8f5,#8f7ce8); color:#fff;
+    box-shadow:0 4px 12px rgba(143,124,232,.35);
+    transition:transform .12s ease;
+  }
+  .btn:active{transform:scale(.94);}
+  .btn.ghost{background:#fff; color:var(--ink); box-shadow:0 3px 10px rgba(120,100,180,.16);}
+  .sync-chip{
+    display:flex; align-items:center; gap:6px;
+    font-size:12px; font-weight:700; color:var(--ink-soft);
+    background:#f1eefb; border-radius:999px; padding:8px 13px; white-space:nowrap;
+  }
+  .sync-chip .dot{width:8px; height:8px; border-radius:50%; background:#b9b3cc;}
+  .sync-chip.on{background:#e2f7ee; color:#1d7a52;} .sync-chip.on .dot{background:#2fb871;}
+  .sync-chip.err{background:#fde8e8; color:#b03030;} .sync-chip.err .dot{background:#e05252;}
+
+  /* ---------- Layout ---------- */
+  main{
+    display:grid; gap:18px; padding:18px 22px 30px;
+    grid-template-columns:minmax(270px,315px) minmax(0,1fr) minmax(0,1fr) minmax(255px,300px);
+    align-items:start; max-width:1560px; margin:0 auto;
+  }
+  main .quest-area{grid-column:2/4; display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:start; min-width:0;}
+  .col{display:flex; flex-direction:column; gap:18px; min-width:0;}
+  .card{
+    background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:16px;
+  }
+  .card-head{display:flex; align-items:center; gap:8px; margin-bottom:10px;}
+  .card-head h2{margin:0; font-size:16.5px; font-weight:800; letter-spacing:-.2px;}
+  .card-head .count{margin-left:auto; font-size:12.5px; font-weight:700; color:var(--ink-soft); background:#f3f1fa; padding:4px 10px; border-radius:999px;}
+
+  /* ---------- Calendar ---------- */
+  .cal-top{display:flex; align-items:center; gap:6px; margin-bottom:8px;}
+  .cal-top h2{margin:0; font-size:17px; font-weight:800;}
+  .cal-top button{
+    border:none; background:#f1eefb; border-radius:12px; width:34px; height:34px;
+    font-size:15px; font-weight:800; color:var(--purple);
+  }
+  .cal-top .today-btn{margin-left:auto; width:auto; padding:0 12px; font-size:12px;}
+  .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:2px; text-align:center;}
+  .cal-dow{font-size:11px; font-weight:800; color:var(--ink-soft); padding:5px 0;}
+  .cal-dow:first-child{color:#e8708f;}
+  .cal-cell{
+    position:relative; aspect-ratio:1/1; display:flex; align-items:center; justify-content:center;
+    font-size:13.5px; font-weight:600; border-radius:12px; color:var(--ink);
+  }
+  .cal-cell .num{line-height:1;}
+  .cal-cell.dim{color:#c9c4d8;}
+  .cal-cell.sun .num{color:#e8708f;}
+  .cal-cell.today{background:linear-gradient(135deg,#ff9cbd,#e88ad0); color:#fff; font-weight:800; box-shadow:0 4px 10px rgba(232,138,208,.45);}
+  .cal-cell.today .num{color:#fff;}
+  .cal-cell .dots{position:absolute; bottom:4px; display:flex; gap:3px;}
+  .cal-cell .dots i{width:5px; height:5px; border-radius:50%; background:var(--pink);}
+  .cal-cell.today .dots i{background:#fff;}
+
+  /* ---------- D-Day ---------- */
+  #ddayList{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px;}
+  .dday-item{
+    display:flex; align-items:center; gap:10px; padding:10px 12px;
+    background:linear-gradient(135deg,#fbf5ff,#f2f0fd); border-radius:16px;
+  }
+  .dday-item .ico{font-size:20px; flex:0 0 auto;}
+  .dday-item .txt{min-width:0; flex:1;}
+  .dday-item .t{display:block; font-size:13.5px; font-weight:700; line-height:1.3; word-break:keep-all;}
+  .dday-item .d{display:block; font-size:11.5px; color:var(--ink-soft); font-weight:600; margin-top:2px;}
+  .dday-item .badge{
+    flex:0 0 auto; font-size:12px; font-weight:800; color:#fff; padding:5px 10px; border-radius:999px;
+    background:linear-gradient(135deg,#ff8fb2,#e88ad0);
+  }
+  .dday-item .badge.soon{background:linear-gradient(135deg,#ff6b6b,#ff8fb2);}
+  .dday-item .badge.after{background:#c9c4d8;}
+  .del-x{
+    border:none; background:transparent; color:#c9c4d8; font-size:16px; font-weight:800;
+    padding:4px 6px; flex:0 0 auto;
+  }
+  .del-x:active{color:#e05252;}
+  .add-form{display:flex; flex-direction:column; gap:8px; margin-top:12px;}
+  .add-form .row{display:flex; gap:8px;}
+  input[type=text],input[type=date]{
+    border:2px solid #efeaf8; background:#faf8fe; border-radius:14px;
+    padding:10px 12px; font-size:13.5px; min-width:0; width:100%;
+  }
+  input[type=text]:focus,input[type=date]:focus{outline:none; border-color:var(--lav);}
+  .add-btn{
+    border:none; border-radius:14px; flex:0 0 auto; width:44px;
+    background:linear-gradient(135deg,#ff9cbd,#e88ad0); color:#fff; font-size:22px; font-weight:800;
+    box-shadow:0 4px 12px rgba(232,138,208,.4);
+  }
+
+  /* ---------- Quest cards ---------- */
+  .kid-card{position:relative; overflow:hidden;}
+  .kid-top{display:flex; align-items:center; gap:12px;}
+  .avatar-wrap{flex:0 0 auto; display:flex; flex-direction:column; align-items:center; gap:5px;}
+  .avatar{
+    width:74px; height:74px; border-radius:22px; flex:0 0 auto; border:none; padding:4px;
+    background:linear-gradient(135deg,#fff4dd,#ffe3ee);
+    box-shadow:0 4px 12px rgba(200,160,200,.25);
+    transition:transform .15s ease;
+  }
+  .avatar:active{transform:scale(.9) rotate(-4deg);}
+  .avatar svg{width:100%; height:100%; display:block; animation:avatarBob 3.6s ease-in-out infinite;}
+  @keyframes avatarBob{0%,100%{transform:translateY(0) rotate(0);}50%{transform:translateY(-2.4px) rotate(-1.2deg);}}
+  .avatar-name{font-size:10.5px; font-weight:800; color:var(--ink-soft); letter-spacing:-.3px; white-space:nowrap;}
+
+  /* ---------- 캐릭터 고르기 ---------- */
+  .avatar-pop{
+    position:absolute; inset:0; z-index:6; display:none;
+    flex-direction:column; align-items:center; justify-content:center; gap:9px;
+    background:rgba(255,255,255,.95); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+    padding:14px 12px;
+  }
+  .avatar-pop.show{display:flex; animation:fadePop .18s ease;}
+  .avatar-pop .pop-title{font-size:12.5px; font-weight:800; color:#8a5cd6;}
+  .avatar-pop .pop-grid{display:grid; grid-template-columns:repeat(5,1fr); gap:6px; width:100%;}
+  .pop-item{
+    border:2px solid #f1edf9; background:#fdfcff; border-radius:14px; padding:5px 2px 4px;
+    display:flex; flex-direction:column; align-items:center; gap:2px;
+    transition:transform .12s ease, border-color .15s ease, background .15s ease;
+  }
+  .pop-item.sel{border-color:#ffa8c6; background:#fff5f9; box-shadow:0 3px 10px rgba(255,140,180,.25);}
+  .pop-item:active{transform:scale(.9);}
+  .pop-item .pic{width:100%; aspect-ratio:1/1; display:block;}
+  .pop-item .pic svg{width:100%; height:100%; display:block; animation:avatarBob 3.6s ease-in-out infinite;}
+  .pop-item .pname{font-size:9px; font-weight:800; color:var(--ink-soft); letter-spacing:-.4px; white-space:nowrap;}
+  .pop-close{
+    position:absolute; top:7px; right:9px; border:none; background:transparent;
+    color:#c1bbd3; font-size:15px; font-weight:800; padding:4px 6px;
+  }
+  @media (prefers-reduced-motion:reduce){
+    .avatar svg,.pop-item .pic svg{animation:none;}
+  }
+  .kid-id{min-width:0; flex:1;}
+  .kid-id .name-row{display:flex; align-items:center; gap:7px;}
+  .kid-id .name{font-size:18px; font-weight:800;}
+  .kid-id .cls{font-size:11.5px; font-weight:700; color:#fff; background:linear-gradient(135deg,#9fc7f5,#7fa9ef); padding:3px 9px; border-radius:999px; white-space:nowrap;}
+  .kid-id .sub{display:flex; align-items:center; gap:7px; margin-top:6px; flex-wrap:wrap;}
+  .lv{font-size:12.5px; font-weight:800; color:#8a5cd6; background:#efe6ff; padding:3px 9px; border-radius:999px;}
+  .dex{font-size:11.5px; font-weight:700; color:var(--ink-soft); background:#f3f1fa; padding:3px 9px; border-radius:999px;}
+  .egg-badge{font-size:11.5px; font-weight:700; color:#b0722a; background:#fff3dd; padding:3px 9px; border-radius:999px;}
+  .tot{
+    font-size:11.5px; font-weight:800; color:#a8762c; letter-spacing:-.2px;
+    background:linear-gradient(135deg,#fff8e8,#ffeec9); padding:3px 9px; border-radius:999px;
+    box-shadow:inset 0 0 0 1px #ffe3b8; font-variant-numeric:tabular-nums;
+  }
+  .xp-wrap{display:flex; align-items:center; gap:8px; margin-top:8px;}
+  .xp-bar{flex:1; height:12px; background:#efeaf8; border-radius:999px; overflow:hidden;}
+  .xp-fill{height:100%; border-radius:999px; background:linear-gradient(90deg,#ffb05e,#ff8fb2,#b7a8f5); transition:width .5s cubic-bezier(.2,.8,.3,1.2); width:0%;}
+  .xp-num{font-size:12px; font-weight:800; color:var(--ink-soft); font-variant-numeric:tabular-nums;}
+  .q-head{display:flex; align-items:center; margin:13px 2px 8px;}
+  .q-head .t{font-size:13.5px; font-weight:800;}
+  .q-head .t b{color:var(--pink);}
+  .q-actions{margin-left:auto; display:flex; align-items:center; gap:3px; flex:0 0 auto;}
+  .reset-day{border:none; background:transparent; font-size:12px; font-weight:700; color:#b9a8e0; text-decoration:underline; padding:4px;}
+  .reset-total{
+    border:none; border-radius:999px; background:#fff4e2; color:#a8762c;
+    font-size:11px; font-weight:800; padding:4px 9px; letter-spacing:-.2px;
+    box-shadow:inset 0 0 0 1px #ffe3b8; white-space:nowrap;
+  }
+  .reset-total:active{transform:scale(.93);}
+  .quest-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; min-height:60px;}
+  .quest{
+    display:flex; align-items:center; gap:10px; padding:11px 12px;
+    border:2px solid #f1edf9; border-radius:16px; background:#fdfcff;
+    transition:background .2s, border-color .2s, opacity .2s;
+  }
+  .quest.done{background:#f2fbf5; border-color:#d9f2e2;}
+  .quest.done .qt{text-decoration:line-through; color:#9aa79f;}
+  .quest input[type=checkbox]{
+    appearance:none; -webkit-appearance:none; width:26px; height:26px; border-radius:9px;
+    border:2px solid #ddd5ef; background:#fff; flex:0 0 auto; position:relative; margin:0;
+  }
+  .quest input[type=checkbox]:checked{border-color:#63c98f; background:#63c98f;}
+  .quest input[type=checkbox]:checked::after{
+    content:""; position:absolute; left:7px; top:3px; width:7px; height:12px;
+    border:solid #fff; border-width:0 2.5px 2.5px 0; transform:rotate(42deg);
+  }
+  .quest .qt{flex:1; font-size:13.5px; font-weight:700; min-width:0; word-break:keep-all;}
+  .quest .pts{font-size:12px; font-weight:800; color:#ef8aab; flex:0 0 auto;}
+  .q-add{display:flex; gap:8px; margin-top:11px;}
+  .q-add input[type=text]{flex:1;}
+  .q-add select{
+    border:2px solid #efeaf8; background:#faf8fe; border-radius:14px;
+    padding:10px 8px; font-size:13px; font-weight:700; flex:0 0 auto;
+  }
+  .level-pop{
+    position:absolute; inset:0; z-index:5; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+    background:rgba(255,255,255,.88); backdrop-filter:blur(4px);
+    animation:fadePop .3s ease;
+  }
+  .level-pop .big{font-size:34px; font-weight:900; color:#8a5cd6; animation:bounceIn .6s cubic-bezier(.2,1.6,.4,1);}
+  .level-pop .emo{font-size:40px; animation:spinY 1.6s linear infinite;}
+  @keyframes bounceIn{0%{transform:scale(.2); opacity:0;}70%{transform:scale(1.15);}100%{transform:scale(1); opacity:1;}}
+  @keyframes spinY{from{transform:rotateY(0);}to{transform:rotateY(360deg);}}
+  @keyframes fadePop{from{opacity:0;}to{opacity:1;}}
+
+  /* ---------- Wishlist ---------- */
+  .wish-filters{display:flex; gap:6px; margin-bottom:10px;}
+  .chip{
+    border:none; background:#f3f1fa; color:var(--ink-soft); font-size:12px; font-weight:700;
+    padding:6px 12px; border-radius:999px;
+  }
+  .chip.on{background:linear-gradient(135deg,#ff9cbd,#e88ad0); color:#fff;}
+  #wishList{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; min-height:60px;}
+  .wish{
+    display:flex; align-items:flex-start; gap:10px; padding:11px 12px;
+    border:2px solid #f1edf9; border-radius:16px; background:#fdfcff;
+  }
+  .wish.done{background:#f7f5fb; opacity:.65;}
+  .wish.done .wt{text-decoration:line-through;}
+  .wish input[type=checkbox]{
+    appearance:none; -webkit-appearance:none; width:24px; height:24px; border-radius:8px;
+    border:2px solid #ddd5ef; background:#fff; flex:0 0 auto; position:relative; margin:0;
+  }
+  .wish input[type=checkbox]:checked{border-color:#b7a8f5; background:#b7a8f5;}
+  .wish input[type=checkbox]:checked::after{
+    content:""; position:absolute; left:6px; top:2px; width:7px; height:12px;
+    border:solid #fff; border-width:0 2.5px 2.5px 0; transform:rotate(42deg);
+  }
+  .wish .body{flex:1; min-width:0;}
+  .wish .wt{font-size:13.5px; font-weight:700; word-break:keep-all;}
+  .wish .memo{font-size:12px; color:var(--ink-soft); font-weight:600; margin-top:2px; word-break:keep-all;}
+  .wish .who{font-size:11px; font-weight:800; padding:2px 8px; border-radius:999px; flex:0 0 auto; margin-top:2px;}
+  .wish .who.rahee{background:#ffe3ee; color:#d4548a;}
+  .wish .who.raeun{background:#dcecfb; color:#3d7cc9;}
+  .empty{font-size:12.5px; color:#c1bbd3; font-weight:600; text-align:center; padding:16px 8px; line-height:1.5;}
+  .wish .w-add select{border:2px solid #efeaf8; background:#faf8fe; border-radius:14px; padding:10px 8px; font-size:13px; font-weight:700; flex:0 0 auto;}
+
+  /* ---------- Standby ---------- */
+  #standby{
+    position:fixed; inset:0; z-index:100; display:flex; flex-direction:column;
+    background:linear-gradient(160deg,#2b2545 0%,#3d3566 55%,#4a3d7a 100%);
+    color:#fff; padding:6vh 6vw; align-items:center; justify-content:center; gap:20px;
+  }
+  #standby[hidden]{display:none;}
+  #standby .clock{font-size:min(15vw,120px); font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:2px; line-height:1;}
+  #standby .date{font-size:min(4vw,24px); font-weight:600; color:#cfc6f2;}
+  .sb-panels{display:flex; gap:18px; flex-wrap:wrap; justify-content:center; width:100%; max-width:1000px;}
+  .sb-panel{background:rgba(255,255,255,.10); border-radius:20px; padding:16px 22px; min-width:220px; flex:1; max-width:460px;}
+  .sb-panel h3{margin:0 0 10px; font-size:14px; font-weight:800; color:#e8defc; letter-spacing:.5px;}
+  .sb-row{display:flex; justify-content:space-between; gap:12px; font-size:14px; padding:5px 0; font-weight:600;}
+  .sb-row .b{color:#ffd166; font-weight:800; white-space:nowrap;}
+  .sb-bar{height:8px; background:rgba(255,255,255,.2); border-radius:999px; overflow:hidden; margin-top:4px;}
+  .sb-bar i{display:block; height:100%; background:linear-gradient(90deg,#ffd166,#ff9cbd); border-radius:999px;}
+  #standby .exit{
+    position:absolute; top:22px; right:22px; border:none; border-radius:999px; padding:12px 20px;
+    background:rgba(255,255,255,.15); color:#fff; font-size:14px; font-weight:700;
+  }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width:1180px){
+    main{grid-template-columns:minmax(250px,300px) minmax(0,1fr); }
+    main .quest-area{grid-column:2; display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:start;}
+    main .wish-area{grid-column:1 / -1;}
+  }
+  @media (max-width:760px){
+    main{grid-template-columns:1fr; padding:14px;}
+    main .quest-area{grid-column:1; grid-template-columns:1fr;}
+    main .wish-area{grid-column:1;}
+    header{padding:12px 14px; flex-wrap:wrap;}
+    #clock{font-size:13px;}
+    .brand h1{font-size:17px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="logo">🏠</div>
+    <h1>라라랜드 대시보드</h1>
+  </div>
+  <div id="clock"><small>loading…</small>&nbsp;</div>
+  <div class="hd-btns">
+    <div class="sync-chip" id="syncChip"><span class="dot"></span><span id="syncText">로컬 저장 모드</span></div>
+    <button class="btn ghost" id="standbyBtn">대기화면</button>
+    <button class="btn ghost" id="resetAllBtn">초기화</button>
+  </div>
+</header>
+
+<main>
+  <!-- 좌측: 달력 + D-Day -->
+  <div class="col">
+    <div class="card" id="calCard">
+      <div class="cal-top">
+        <button id="calPrev" aria-label="이전 달">‹</button>
+        <h2 id="calTitle"></h2>
+        <button id="calNext" aria-label="다음 달">›</button>
+        <button id="calToday" class="today-btn">오늘</button>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>📅 D-Day</h2><span class="count" id="ddayCount"></span></div>
+      <ul id="ddayList"></ul>
+      <div class="add-form">
+        <div class="row">
+          <input type="date" id="ddayDate" aria-label="날짜">
+        </div>
+        <div class="row">
+          <input type="text" id="ddayTitle" placeholder="새 D-Day 추가 (예: 견학일)" aria-label="D-Day 제목">
+          <button class="add-btn" id="ddayAdd" aria-label="D-Day 추가">+</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 가운데: 아이별 퀘스트 -->
+  <div class="quest-area" id="questArea"></div>
+
+  <!-- 우측: 위시리스트 -->
+  <div class="col wish-area">
+    <div class="card">
+      <div class="card-head"><h2>🛒 엄마 이거 사주세요</h2><span class="count" id="wishCount"></span></div>
+      <div class="wish-filters" id="wishFilters">
+        <button class="chip on" data-f="all">전체</button>
+        <button class="chip" data-f="라희">라희</button>
+        <button class="chip" data-f="라은">라은</button>
+      </div>
+      <ul id="wishList"></ul>
+      <div class="add-form">
+        <div class="row">
+          <input type="text" id="wishTitle" placeholder="갖고 싶은 것 · 필요한 것" aria-label="위시리스트 항목">
+        </div>
+        <div class="row w-add">
+          <select id="wishWho" aria-label="아이 선택">
+            <option value="라희">라희</option>
+            <option value="라은">라은</option>
+          </select>
+          <input type="text" id="wishMemo" placeholder="메모 · 가격" aria-label="메모 또는 가격">
+          <button class="add-btn" id="wishAdd" aria-label="위시리스트 추가">+</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- 대기화면 -->
+<div id="standby" hidden>
+  <button class="exit" id="standbyExit">✕ 화면으로 돌아가기</button>
+  <div class="clock" id="sbClock">--:--</div>
+  <div class="date" id="sbDate"></div>
+  <div class="sb-panels">
+    <div class="sb-panel">
+      <h3>⭐ 오늘의 퀘스트</h3>
+      <div id="sbQuests"></div>
+    </div>
+    <div class="sb-panel">
+      <h3>📅 다가오는 D-Day</h3>
+      <div id="sbDdays"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   🔄 동기화 설정 (Firebase Realtime Database)
+   ------------------------------------------------------------
+   여러 아이패드에서 실시간 동기화를 켜려면 아래 databaseURL 에
+   Firebase Realtime Database 주소만 넣으면 됩니다. 빌드 필요 없음.
+   (Firebase 콘솔 → Realtime Database → URL 복사,
+    Rules 읽기/쓰기 허용 후 가족만 아는 URL이니 보안 유의)
+
+   예)
+   const FIREBASE_CONFIG = {
+     databaseURL: "https://내프로젝트-default-rtdb.asia-southeast1.firebasedatabase.app"
+   };
+
+   비워 두면 각 기기의 localStorage(로컬 저장 모드)로 동작합니다.
+   ============================================================ */
+const FIREBASE_CONFIG = {
+  databaseURL: ""   // ← 여기에 Firebase Realtime Database URL 입력
+};
+const SYNC_PATH = "lalaland-dashboard";  // DB 안에서 사용할 노드 이름
+
+/* ---------- 기본 데이터 ---------- */
+const DEFAULT_STATE = () => ({
+  dd: [
+    { id:uid(), date:"2026-11-20", icon:"👗", title:"칠드런데이 파란 옷 & 기부금 20바트" },
+    { id:uid(), date:"2026-11-20", icon:"💉", title:"독감 백신 접종 (14:00)" },
+    { id:uid(), date:"2026-11-24", icon:"👕", title:"러이크라통 옷 입기" },
+    { id:uid(), date:"2026-11-30", icon:"🎓", title:"라은 학교 발표회 (08:00)" },
+    { id:uid(), date:"2026-12-01", icon:"💃", title:"라희 댄스 발표 (16:30)" },
+    { id:uid(), date:"2026-12-02", icon:"🏫", title:"라희 학교 발표회 (08:30)" }
+  ],
+  kids: {
+    stella: {
+      name:"라희", cls:"Stella · Y5A", avatar:0, lv:3, xp:45, dex:0, eggs:0,
+      quests:[
+        { id:uid(), t:"영어책 읽기", p:20, done:false },
+        { id:uid(), t:"바이올린 연습", p:30, done:false },
+        { id:uid(), t:"내일 가방 챙기기", p:20, done:false },
+        { id:uid(), t:"방 정리 5분", p:20, done:false },
+        { id:uid(), t:"양치 깨끗이", p:15, done:false }
+      ]
+    },
+    ella: {
+      name:"라은", cls:"Ella · FS3 Jaguars", avatar:1, lv:2, xp:0, dex:0, eggs:0,
+      quests:[
+        { id:uid(), t:"유치원 기분 좋게 등원", p:20, done:false },
+        { id:uid(), t:"그림책 보기", p:20, done:false },
+        { id:uid(), t:"밥 씩씩하게 먹기", p:20, done:false },
+        { id:uid(), t:"장난감 제자리에", p:20, done:false },
+        { id:uid(), t:"손 씻기", p:15, done:false }
+      ]
+    }
+  },
+  wish: []
+});
+
+/* ---------- 유틸 ---------- */
+function uid(){ return Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4); }
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+const BKK = "Asia/Bangkok";
+const fmt = new Intl.DateTimeFormat("ko-KR",{timeZone:BKK,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:true,weekday:"short"});
+function bkkNow(){
+  const p = {};
+  for (const x of fmt.formatToParts(new Date())) p[x.type] = x.value;
+  const weekday = p.weekday ? p.weekday.replace("요일","") : "";
+  return {
+    y:+p.year, m:+p.month, d:+p.day,
+    weekday,
+    ampm:p.dayPeriod || "", hh:p.hour, mm:p.minute, ss:p.second,
+    dateStr:`${p.year}-${p.month}-${p.day}`
+  };
+}
+function ymd(y,m,d){ return `${y}-${String(m).padStart(2,"0")}-${String(d).padStart(2,"0")}`; }
+function ddayBadge(dateStr){
+  const n = bkkNow();
+  const [ty,tm,td] = dateStr.split("-").map(Number);
+  const a = Date.UTC(n.y, n.m-1, n.d), b = Date.UTC(ty, tm-1, td);
+  const diff = Math.round((b-a)/86400000);
+  if (diff === 0) return {label:"D-Day", cls:"soon"};
+  if (diff > 0)  return {label:"D-"+diff, cls: diff<=3 ? "soon" : ""};
+  return {label:"D+"+(-diff), cls:"after"};
+}
+
+/* ---------- 상태 & 저장 ---------- */
+const LS_KEY = "lalaland-dashboard-QA-LEGACY";
+let state = load();
+let saveTimer = null;
+
+function load(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw){
+      const s = JSON.parse(raw);
+      if (s && s.kids && s.dd) return s;
+    }
+  }catch(e){}
+  const d = DEFAULT_STATE();
+  persistLocal(d);
+  return d;
+}
+function persistLocal(s){
+  try{
+    const clean = JSON.parse(JSON.stringify(s, (k,v)=> k==="_celebrate" ? undefined : v));
+    localStorage.setItem(LS_KEY, JSON.stringify(clean));
+  }catch(e){}
+}
+/* 로컬 + (설정 시) 클라우드에 저장. 화면 갱신은 호출부에서. */
+function save(){
+  persistLocal(state);
+  Sync.push();
+}
+
+/* ---------- 실시간 동기화 (Firebase) ---------- */
+const Sync = {
+  mode:"local", lastJson:"", ref:null,
+  init(){
+    const url = (FIREBASE_CONFIG && FIREBASE_CONFIG.databaseURL || "").trim();
+    if (!url){ this.setChip("local"); return; }
+    this.setChip("loading");
+    const appDb = document.createElement("script"); appDb.src = "https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js";
+    const db = document.createElement("script"); db.src = "https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js";
+    const go = () => {
+      try{
+        firebase.initializeApp({ databaseURL: url });
+        this.ref = firebase.database().ref(SYNC_PATH);
+        this.ref.on("value", snap => {
+          const v = snap.val();
+          if (!v){ this.ref.set(state); return; }              // 처음: 로컬 상태를 클라우드로
+          const json = JSON.stringify(v);
+          if (json === this.lastJson) return;                   // 내가 방금 쓴 것
+          state = Object.assign(DEFAULT_STATE(), v);
+          this.lastJson = json;
+          persistLocal(state);
+          renderAll();
+          this.setChip("on");
+        }, err => { console.warn(err); this.setChip("err"); });
+        this.setChip("on");
+      }catch(e){ console.warn(e); this.setChip("err"); }
+    };
+    let loaded = 0;
+    const done = () => { if (++loaded === 2) go(); };
+    appDb.onload = done; db.onload = done;
+    appDb.onerror = () => { this.setChip("err"); };
+    db.onerror = () => { this.setChip("err"); };
+    document.head.appendChild(appDb); document.head.appendChild(db);
+  },
+  push(){
+    if (!this.ref) return;
+    this.lastJson = JSON.stringify(state);
+    this.ref.set(state).catch(() => this.setChip("err"));
+  },
+  setChip(m){
+    const chip = document.getElementById("syncChip"), t = document.getElementById("syncText");
+    chip.classList.remove("on","err");
+    chip.onclick = null;
+    if (m === "on"){ chip.classList.add("on"); t.textContent = "🟢 실시간 동기화"; }
+    else if (m === "err"){
+      chip.classList.add("err"); t.textContent = "동기화 오류 · 로컬 저장 중";
+      chip.onclick = () => alert("클라우드 실시간 동기화에 연결하지 못했습니다.\n\n· 지금은 각 기기의 저장소(로컬)로 정상 동작합니다.\n· Firebase 콘솔에서 Realtime Database의 규칙(읽기/쓰기 권한)을 확인해 주세요.\n· 테스트 모드 기간이 지났다면 규칙을 허용으로 바꾸면 바로 다시 연결됩니다.\n\n페이지를 새로 고치면 다시 시도합니다.");
+    }
+    else if (m === "loading"){ t.textContent = "동기화 연결 중…"; }
+    else { t.textContent = "로컬 저장 모드"; }
+  }
+};
+
+/* ---------- 고양이 친구들 캐릭터 SVG ----------
+   뾰족한 고양이 귀 + 동글동글 반짝이는 눈 + 수염 + 볼터치의 귀여운 인라인 일러스트.
+   배열 순서(0·1·2…)가 그대로 저장되는 avatar 값이라, 예전에 저장된
+   치이카와 친구들(0~4)도 아래 새 고양이 친구로 자연스럽게 이어집니다.
+     0 치즈냥 · 1 턱시도냥 · 2 삼색냥 · 3 회색냥 · 4 딸기밀크냥          */
+const AVATARS = [
+  { key:"cheese", name:"치즈냥", svg:`
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <path d="M24 43 L27 14 L48 29 Z" fill="#FFE7A8" stroke="#E3BB66" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M76 43 L73 14 L52 29 Z" fill="#FFE7A8" stroke="#E3BB66" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M29.5 34 L31 21.5 L39.5 29.5 Z" fill="#FFBFCE"/>
+      <path d="M70.5 34 L69 21.5 L60.5 29.5 Z" fill="#FFBFCE"/>
+      <ellipse cx="50" cy="58" rx="31" ry="28.5" fill="#FFE7A8" stroke="#E3BB66" stroke-width="2.2"/>
+      <path d="M41 35.2 q4 -5.5 8 0" fill="none" stroke="#E6B65E" stroke-width="2.1" stroke-linecap="round"/>
+      <path d="M51 34.8 q4 -5.5 8 0" fill="none" stroke="#E6B65E" stroke-width="2.1" stroke-linecap="round"/>
+      <path d="M9 55.5 L23 57 M8.5 64 L23 65" fill="none" stroke="#D9AE6E" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M91 55.5 L77 57 M91.5 64 L77 65" fill="none" stroke="#D9AE6E" stroke-width="1.5" stroke-linecap="round"/>
+      <ellipse cx="27" cy="66" rx="5.2" ry="3.2" fill="#FFB3C8" opacity=".85"/>
+      <ellipse cx="73" cy="66" rx="5.2" ry="3.2" fill="#FFB3C8" opacity=".85"/>
+      <circle cx="39" cy="57.5" r="5.6" fill="#4A4458"/>
+      <circle cx="61" cy="57.5" r="5.6" fill="#4A4458"/>
+      <circle cx="41" cy="55" r="2.1" fill="#fff"/>
+      <circle cx="63" cy="55" r="2.1" fill="#fff"/>
+      <circle cx="37" cy="60.5" r="1.1" fill="#fff" opacity=".8"/>
+      <circle cx="59" cy="60.5" r="1.1" fill="#fff" opacity=".8"/>
+      <path d="M47.4 65.4 h5.2 l-2.6 2.9 z" fill="#F0839C"/>
+      <path d="M50 68.3 q-2.6 3.1 -4.9 0 M50 68.3 q2.6 3.1 4.9 0" fill="none" stroke="#B08A5C" stroke-width="1.6" stroke-linecap="round"/>
+    </svg>` },
+  { key:"tuxedo", name:"턱시도냥", svg:`
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <path d="M24 43 L27 14 L48 29 Z" fill="#3A3550" stroke="#262238" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M76 43 L73 14 L52 29 Z" fill="#3A3550" stroke="#262238" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M29.5 34 L31 21.5 L39.5 29.5 Z" fill="#F2A9BE"/>
+      <path d="M70.5 34 L69 21.5 L60.5 29.5 Z" fill="#F2A9BE"/>
+      <ellipse cx="50" cy="58" rx="31" ry="28.5" fill="#FFFDF9" stroke="#C5BAD6" stroke-width="2.2"/>
+      <path d="M20.5 49.5 C21 32 33 26.5 50 26.5 C67 26.5 79 32 79.5 49.5 C71 40.5 61 38.5 50 38.5 C39 38.5 29 40.5 20.5 49.5 Z" fill="#3A3550"/>
+      <path d="M9 55.5 L23 57 M8.5 64 L23 65" fill="none" stroke="#B9AEC9" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M91 55.5 L77 57 M91.5 64 L77 65" fill="none" stroke="#B9AEC9" stroke-width="1.5" stroke-linecap="round"/>
+      <ellipse cx="27" cy="66" rx="5.2" ry="3.2" fill="#FFB3C8" opacity=".9"/>
+      <ellipse cx="73" cy="66" rx="5.2" ry="3.2" fill="#FFB3C8" opacity=".9"/>
+      <circle cx="39" cy="57.5" r="5.6" fill="#3F3A52"/>
+      <circle cx="61" cy="57.5" r="5.6" fill="#3F3A52"/>
+      <circle cx="41" cy="55" r="2.1" fill="#fff"/>
+      <circle cx="63" cy="55" r="2.1" fill="#fff"/>
+      <circle cx="37" cy="60.5" r="1.1" fill="#fff" opacity=".8"/>
+      <circle cx="59" cy="60.5" r="1.1" fill="#fff" opacity=".8"/>
+      <path d="M47.4 65.4 h5.2 l-2.6 2.9 z" fill="#F0839C"/>
+      <path d="M50 68.3 q-2.6 3.1 -4.9 0 M50 68.3 q2.6 3.1 4.9 0" fill="none" stroke="#6C6680" stroke-width="1.6" stroke-linecap="round"/>
+    </svg>` },
+  { key:"calico", name:"삼색냥", svg:`
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <path d="M24 43 L27 14 L48 29 Z" fill="#F6B070" stroke="#DB9152" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M76 43 L73 14 L52 29 Z" fill="#B5805C" stroke="#96684A" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M29.5 34 L31 21.5 L39.5 29.5 Z" fill="#FFD8C6"/>
+      <path d="M70.5 34 L69 21.5 L60.5 29.5 Z" fill="#F0CBB6"/>
+      <ellipse cx="50" cy="58" rx="31" ry="28.5" fill="#FFFDF9" stroke="#C5BAD6" stroke-width="2.2"/>
+      <path d="M25 47 C27 33.5 35 28 46 28.5 C41 33 34 39 30 51 Z" fill="#F6B070"/>
+      <path d="M75 47 C73 33.5 65 28 54 28.5 C59 33 66 39 70 51 Z" fill="#B5805C"/>
+      <path d="M9 55.5 L23 57 M8.5 64 L23 65" fill="none" stroke="#B9AEC9" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M91 55.5 L77 57 M91.5 64 L77 65" fill="none" stroke="#B9AEC9" stroke-width="1.5" stroke-linecap="round"/>
+      <ellipse cx="27" cy="66" rx="5.2" ry="3.2" fill="#FFB3C8" opacity=".9"/>
+      <ellipse cx="73" cy="66" rx="5.2" ry="3.2" fill="#FFB3C8" opacity=".9"/>
+      <circle cx="39" cy="57.5" r="5.6" fill="#4A4458"/>
+      <circle cx="61" cy="57.5" r="5.6" fill="#4A4458"/>
+      <circle cx="41" cy="55" r="2.1" fill="#fff"/>
+      <circle cx="63" cy="55" r="2.1" fill="#fff"/>
+      <circle cx="37" cy="60.5" r="1.1" fill="#fff" opacity=".8"/>
+      <circle cx="59" cy="60.5" r="1.1" fill="#fff" opacity=".8"/>
+      <path d="M47.4 65.4 h5.2 l-2.6 2.9 z" fill="#F0839C"/>
+      <path d="M50 68.3 q-2.6 3.1 -4.9 0 M50 68.3 q2.6 3.1 4.9 0" fill="none" stroke="#6C6680" stroke-width="1.6" stroke-linecap="round"/>
+    </svg>` },
+  { key:"gray", name:"회색냥", svg:`
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <path d="M24 43 L27 14 L48 29 Z" fill="#CBD6E2" stroke="#9AAFC2" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M76 43 L73 14 L52 29 Z" fill="#CBD6E2" stroke="#9AAFC2" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M29.5 34 L31 21.5 L39.5 29.5 Z" fill="#F2BAC8"/>
+      <path d="M70.5 34 L69 21.5 L60.5 29.5 Z" fill="#F2BAC8"/>
+      <ellipse cx="50" cy="58" rx="31" ry="28.5" fill="#CBD6E2" stroke="#9AAFC2" stroke-width="2.2"/>
+      <ellipse cx="50" cy="72" rx="14.5" ry="9" fill="#E4EBF3"/>
+      <path d="M9 55.5 L23 57 M8.5 64 L23 65" fill="none" stroke="#8FA3B8" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M91 55.5 L77 57 M91.5 64 L77 65" fill="none" stroke="#8FA3B8" stroke-width="1.5" stroke-linecap="round"/>
+      <ellipse cx="27" cy="66" rx="5.2" ry="3.2" fill="#FFAFC6" opacity=".85"/>
+      <ellipse cx="73" cy="66" rx="5.2" ry="3.2" fill="#FFAFC6" opacity=".85"/>
+      <circle cx="39" cy="57.5" r="5.6" fill="#434E62"/>
+      <circle cx="61" cy="57.5" r="5.6" fill="#434E62"/>
+      <circle cx="41" cy="55" r="2.1" fill="#fff"/>
+      <circle cx="63" cy="55" r="2.1" fill="#fff"/>
+      <circle cx="37" cy="60.5" r="1.1" fill="#fff" opacity=".8"/>
+      <circle cx="59" cy="60.5" r="1.1" fill="#fff" opacity=".8"/>
+      <path d="M47.4 65.4 h5.2 l-2.6 2.9 z" fill="#F0839C"/>
+      <path d="M50 68.3 q-2.6 3.1 -4.9 0 M50 68.3 q2.6 3.1 4.9 0" fill="none" stroke="#7B8B9E" stroke-width="1.6" stroke-linecap="round"/>
+    </svg>` },
+  { key:"strawberry", name:"딸기밀크냥", svg:`
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <path d="M24 43 L27 14 L48 29 Z" fill="#FFD9E3" stroke="#EF9FB6" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M76 43 L73 14 L52 29 Z" fill="#FFD9E3" stroke="#EF9FB6" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M29.5 34 L31 21.5 L39.5 29.5 Z" fill="#FFB3C9"/>
+      <path d="M70.5 34 L69 21.5 L60.5 29.5 Z" fill="#FFB3C9"/>
+      <ellipse cx="50" cy="58" rx="31" ry="28.5" fill="#FFD9E3" stroke="#EF9FB6" stroke-width="2.2"/>
+      <path d="M50 32 c-3.6 0 -6 2.9 -6 5.9 c0 3.4 3.4 6.1 6 8.6 c2.6 -2.5 6 -5.2 6 -8.6 c0 -3 -2.4 -5.9 -6 -5.9 z" fill="#FF7C93"/>
+      <path d="M45.5 32.2 q4.5 -4.4 9 -0.2" fill="none" stroke="#7FC08A" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="48" cy="37.5" r=".8" fill="#FFF3F6"/>
+      <circle cx="52.4" cy="41" r=".8" fill="#FFF3F6"/>
+      <ellipse cx="50" cy="72" rx="13" ry="8.5" fill="#FFF7FA"/>
+      <path d="M9 55.5 L23 57 M8.5 64 L23 65" fill="none" stroke="#E79AB0" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M91 55.5 L77 57 M91.5 64 L77 65" fill="none" stroke="#E79AB0" stroke-width="1.5" stroke-linecap="round"/>
+      <ellipse cx="27" cy="66" rx="5.2" ry="3.2" fill="#FF96B3" opacity=".8"/>
+      <ellipse cx="73" cy="66" rx="5.2" ry="3.2" fill="#FF96B3" opacity=".8"/>
+      <circle cx="39" cy="57.5" r="5.6" fill="#4A4458"/>
+      <circle cx="61" cy="57.5" r="5.6" fill="#4A4458"/>
+      <circle cx="41" cy="55" r="2.1" fill="#fff"/>
+      <circle cx="63" cy="55" r="2.1" fill="#fff"/>
+      <circle cx="37" cy="60.5" r="1.1" fill="#fff" opacity=".8"/>
+      <circle cx="59" cy="60.5" r="1.1" fill="#fff" opacity=".8"/>
+      <path d="M47.4 65.4 h5.2 l-2.6 2.9 z" fill="#F0839C"/>
+      <path d="M50 68.3 q-2.6 3.1 -4.9 0 M50 68.3 q2.6 3.1 4.9 0" fill="none" stroke="#D97F97" stroke-width="1.6" stroke-linecap="round"/>
+    </svg>` },
+];
+
+/* 예전에 저장된 이름/번호도 새 고양이 친구로 자연스럽게 이어 줍니다 */
+const AVATAR_ALIASES = {
+  "치이카와":"cheese", "하치와레":"tuxedo", "우사기":"calico", "모몽가":"gray", "쿠리만쥬":"strawberry",
+  "불꽃이":"cheese", "번개이":"tuxedo", "방울이":"calico",
+  "chiikawa":"cheese", "hachiware":"tuxedo", "usagi":"calico", "momonga":"gray", "kurimanju":"strawberry",
+  "fire":"cheese", "bolt":"tuxedo", "drop":"calico"
+};
+/* 아이별 기본 캐릭터: 라희 = 치즈냥, 라은 = 턱시도냥 */
+const DEFAULT_AVATAR = { stella:0, ella:1 };
+
+/* ---------- 아이 카드 순서 ----------
+   Firebase가 키를 알파벳순(ella → stella)으로 내려도 화면에서는 항상
+   라희(Stella)가 왼쪽/위, 라은(Ella)이 오른쪽/아래로 고정합니다. */
+const KID_ORDER = ["stella", "ella"];
+function orderedKidKeys(kids){
+  const keys = Object.keys(kids || {});
+  const head = KID_ORDER.filter(k => keys.indexOf(k) >= 0);
+  const rest = keys.filter(k => KID_ORDER.indexOf(k) < 0).sort();
+  return head.concat(rest);
+}
+
+function avatarIndexOf(v, fallback){
+  const n = AVATARS.length;
+  const mod = x => ((Math.trunc(x) % n) + n) % n;
+  const base = Number.isFinite(fallback) ? mod(fallback) : 0;
+  if (typeof v === "number" && Number.isFinite(v)) return mod(v);
+  if (typeof v === "string"){
+    const s = v.trim();
+    if (!s) return base;
+    const byKey = AVATARS.findIndex(a => a.key === s.toLowerCase() || a.name === s);
+    if (byKey >= 0) return byKey;
+    const alias = AVATAR_ALIASES[s] || AVATAR_ALIASES[s.toLowerCase()];
+    if (alias){
+      const i = AVATARS.findIndex(a => a.key === alias);
+      if (i >= 0) return i;
+    }
+    const num = Number(s);
+    if (Number.isFinite(num)) return mod(num);
+    return base;
+  }
+  if (v && typeof v === "object") return avatarIndexOf(v.key || v.name || v.id, fallback);
+  return base;
+}
+
+/* ---------- 달력 ---------- */
+let calY, calM;   // 표시 중인 연/월
+(function initCal(){
+  const n = bkkNow(); calY = n.y; calM = n.m;
+})();
+function renderCal(){
+  document.getElementById("calTitle").textContent = `${calY}년 ${calM}월`;
+  const grid = document.getElementById("calGrid");
+  const today = bkkNow().dateStr;
+  const first = new Date(calY, calM-1, 1).getDay();           // 0=일
+  const last = new Date(calY, calM, 0).getDate();
+  let html = ["일","월","화","수","목","금","토"].map(d=>`<div class="cal-dow">${d}</div>`).join("");
+  for (let i=0;i<first;i++) html += `<div class="cal-cell"></div>`;
+  for (let d=1; d<=last; d++){
+    const ds = ymd(calY,calM,d);
+    const dow = new Date(calY,calM-1,d).getDay();
+    const cls = ["cal-cell"];
+    if (ds === today) cls.push("today");
+    if (dow === 0 && ds !== today) cls.push("sun");
+    const dots = state.dd.filter(x=>x.date===ds);
+    const dotHtml = dots.length ? `<span class="dots">${dots.slice(0,3).map(()=>"<i></i>").join("")}</span>` : "";
+    html += `<div class="${cls.join(" ")}"><span class="num">${d}</span>${dotHtml}</div>`;
+  }
+  grid.innerHTML = html;
+}
+document.getElementById("calPrev").onclick = ()=>{ calM--; if(calM<1){calM=12;calY--;} renderCal(); };
+document.getElementById("calNext").onclick = ()=>{ calM++; if(calM>12){calM=1;calY++;} renderCal(); };
+document.getElementById("calToday").onclick = ()=>{ const n=bkkNow(); calY=n.y; calM=n.m; renderCal(); };
+
+/* ---------- D-Day ---------- */
+function renderDday(){
+  const n = bkkNow();
+  const items = [...state.dd].sort((a,b)=> a.date.localeCompare(b.date));
+  document.getElementById("ddayCount").textContent = `${items.length}개`;
+  const ul = document.getElementById("ddayList");
+  if (!items.length){ ul.innerHTML = `<div class="empty">등록된 D-Day가 없어요<br>아래에서 새로 추가해 보세요 📅</div>`; return; }
+  ul.innerHTML = items.map(x=>{
+    const b = ddayBadge(x.date);
+    const [,tm,td] = x.date.split("-").map(Number);
+    const dow = ["일","월","화","수","목","금","토"][new Date(x.date+"T00:00:00").getDay()];
+    return `<li class="dday-item">
+      <span class="ico">${esc(x.icon||"📌")}</span>
+      <span class="txt"><span class="t">${esc(x.title)}</span><span class="d">${tm}/${td} (${dow})${x.date<n.date?" · 지남":""}</span></span>
+      <span class="badge ${b.cls}">${b.label}</span>
+      <button class="del-x" data-dday="${x.id}" aria-label="삭제">✕</button>
+    </li>`;
+  }).join("");
+}
+document.getElementById("ddayList").addEventListener("click", e=>{
+  const id = e.target.closest("[data-dday]")?.dataset.dday;
+  if (!id) return;
+  state.dd = state.dd.filter(x=>x.id!==id);
+  save(); renderAll();
+});
+document.getElementById("ddayAdd").onclick = ()=>{
+  const date = document.getElementById("ddayDate").value;
+  const title = document.getElementById("ddayTitle").value.trim();
+  if (!date || !title) return;
+  state.dd.push({id:uid(), date, icon:"📌", title});
+  document.getElementById("ddayTitle").value = "";
+  save(); renderAll();
+};
+
+/* ---------- 퀘스트 카드 ---------- */
+function kidProgress(k){
+  const total = k.quests.length, done = k.quests.filter(q=>q.done).length;
+  return {total, done};
+}
+/* 누적 점수 — totalXp가 아직 없는 예전 데이터(Firebase·localStorage)는
+   지금 레벨·경험치에서 자연스럽게 이어서 계산합니다. */
+function getTotalXp(k){
+  if (!k) return 0;
+  const raw = k.totalXp;
+  if (raw !== undefined && raw !== null && raw !== "" && Number.isFinite(+raw)) return Math.max(0, Math.trunc(+raw));
+  return ((Math.max(1, k.lv || 1) - 1) * 100) + (k.xp || 0);
+}
+function renderQuests(){
+  const area = document.getElementById("questArea");
+  /* 라희(Stella) → 라은(Ella) 순서로 고정. 그 밖의 키가 있으면 뒤에 이어 붙입니다. */
+  area.innerHTML = orderedKidKeys(state.kids).map(key=>{
+    const k = state.kids[key];
+    if (!k) return "";
+    const idx = avatarIndexOf(k && k.avatar, DEFAULT_AVATAR[key]);
+    const av = AVATARS[idx];
+    const prog = kidProgress(k);
+    const allDone = prog.total>0 && prog.done===prog.total;
+    return `<div class="card kid-card" data-kid="${key}">
+      ${k._celebrate ? `<div class="level-pop"><span class="emo">🎉✨</span><span class="big">LEVEL UP! Lv.${k.lv}</span><span style="font-weight:700;color:#6d5a9e">도감 +1 · 올클리어 알 +1 🥚</span></div>` : ""}
+      <div class="avatar-pop" data-pop>
+        <button class="pop-close" data-popclose aria-label="닫기">✕</button>
+        <div class="pop-title">어떤 고양이로 바꿀까? 🐾</div>
+        <div class="pop-grid">
+          ${AVATARS.map((a,i)=>`<button class="pop-item ${i===idx?"sel":""}" data-pick="${i}" aria-label="${esc(a.name)}" title="${esc(a.name)}">
+            <span class="pic">${a.svg}</span><span class="pname">${esc(a.name)}</span></button>`).join("")}
+        </div>
+      </div>
+      <div class="kid-top">
+        <div class="avatar-wrap">
+          <button class="avatar" data-act="avatar" title="${esc(av.name)} · 눌러서 캐릭터 바꾸기" aria-label="캐릭터 바꾸기">${av.svg}</button>
+          <span class="avatar-name">${esc(av.name)}</span>
+        </div>
+        <div class="kid-id">
+          <div class="name-row">
+            <span class="name">${esc(k.name)}</span>
+            <span class="cls">${esc(k.cls)}</span>
+          </div>
+          <div class="sub">
+            <span class="lv">Lv.${k.lv}</span>
+            <span class="dex">도감 ${k.dex}</span>
+            <span class="egg-badge">올클리어 알 ${k.eggs}</span>
+            <span class="tot" title="지금까지 모은 점수">🏆 누적 ${getTotalXp(k)}점</span>
+            ${allDone ? `<span class="egg-badge" style="background:#e2f7ee;color:#1d7a52">🌟 올클리어!</span>` : ""}
+          </div>
+          <div class="xp-wrap">
+            <div class="xp-bar"><div class="xp-fill" style="width:${k.xp}%"></div></div>
+            <span class="xp-num">${k.xp}/100</span>
+          </div>
+        </div>
+      </div>
+      <div class="q-head">
+        <span class="t">⭐ 오늘의 퀘스트 <b>${prog.done}/${prog.total}</b></span>
+        <span class="q-actions">
+          <button class="reset-total" data-act="resetTotal" title="누적 점수만 0점으로 초기화">누적 초기화</button>
+          <button class="reset-day" data-act="resetDay">하루 초기화</button>
+        </span>
+      </div>
+      <ul class="quest-list" data-qkey="${key}">
+        ${k.quests.length ? k.quests.map(q=>`
+          <li class="quest ${q.done?"done":""}">
+            <input type="checkbox" data-q="${q.id}" ${q.done?"checked":""} aria-label="${esc(q.t)}">
+            <span class="qt">${esc(q.t)}</span>
+            <span class="pts">+${q.p}</span>
+            <button class="del-x" data-qdel="${q.id}" aria-label="퀘스트 삭제">✕</button>
+          </li>`).join("") : `<li class="empty">퀘스트를 추가해 보세요 ✏️</li>`}
+      </ul>
+      <div class="q-add">
+        <input type="text" placeholder="퀘스트 추가" data-qnew aria-label="새 퀘스트">
+        <select data-qpts aria-label="점수 선택">
+          <option value="10">+10</option><option value="15">+15</option>
+          <option value="20" selected>+20</option><option value="30">+30</option>
+        </select>
+        <button class="add-btn" data-act="addQuest" aria-label="퀘스트 추가">+</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+/* 레벨업 축하 표시 자동 정리 */
+setInterval(()=>{
+  let dirty = false;
+  for (const k of Object.values(state.kids)){ if (k._celebrate){ k._celebrate = false; dirty = true; } }
+  if (dirty){ renderQuests(); }
+}, 3200);
+
+function toggleQuest(key, qid, checked){
+  const k = state.kids[key];
+  const q = k.quests.find(x=>x.id===qid);
+  if (!q) return;
+  if (q.done === checked) return;
+  q.done = checked;
+  if (checked){
+    k.totalXp = getTotalXp(k) + q.p;
+    k.xp += q.p;
+    while (k.xp >= 100){
+      k.xp -= 100; k.lv += 1; k.dex += 1; k.eggs += 1;
+      k._celebrate = true;
+      setTimeout(()=>{ renderQuests(); }, 10);
+    }
+  } else {
+    k.totalXp = Math.max(0, getTotalXp(k) - q.p);
+    k.xp = Math.max(0, k.xp - q.p);
+  }
+  save(); renderAll();
+}
+
+/* 캐릭터 고르기 팔레트 열기/닫기 */
+function openAvatarPicker(card){
+  const pop = card.querySelector(".avatar-pop");
+  if (!pop) return;
+  const wasOpen = pop.classList.contains("show");
+  document.querySelectorAll("#questArea .avatar-pop.show").forEach(p=>p.classList.remove("show"));
+  if (!wasOpen) pop.classList.add("show");
+}
+document.addEventListener("click", e=>{
+  if (e.target.closest("[data-kid]")) return;
+  document.querySelectorAll("#questArea .avatar-pop.show").forEach(p=>p.classList.remove("show"));
+});
+
+document.getElementById("questArea").addEventListener("change", e=>{
+  const cb = e.target.closest("input[type=checkbox][data-q]");
+  if (!cb) return;
+  const key = cb.closest("[data-kid]").dataset.kid;
+  toggleQuest(key, cb.dataset.q, cb.checked);
+});
+document.getElementById("questArea").addEventListener("click", e=>{
+  const card = e.target.closest("[data-kid]"); if (!card) return;
+  const key = card.dataset.kid, k = state.kids[key];
+
+  /* 캐릭터 고르기 */
+  const pick = e.target.closest("[data-pick]");
+  if (pick){
+    k.avatar = avatarIndexOf(+pick.dataset.pick, DEFAULT_AVATAR[key]);
+    save(); renderQuests(); return;
+  }
+  if (e.target.closest("[data-popclose]") || e.target.classList.contains("avatar-pop")){
+    card.querySelector(".avatar-pop")?.classList.remove("show");
+    return;
+  }
+
+  const act = e.target.closest("[data-act]")?.dataset.act;
+  if (act === "avatar"){ openAvatarPicker(card); }
+  else if (act === "resetDay"){
+    const keepTotal = getTotalXp(k);   // 오늘 번 점수도 누적에는 그대로 남깁니다
+    k.quests.forEach(q=>q.done=false);
+    k.xp = 0;
+    k.totalXp = keepTotal;
+    save(); renderAll();
+  }
+  else if (act === "resetTotal"){
+    if (!confirm(`${k.name}의 누적 점수를 0점으로 초기화할까요?`)) return;
+    k.totalXp = 0;
+    save(); renderAll();
+  }
+  else if (act === "addQuest"){
+    const inp = card.querySelector("[data-qnew]");
+    const t = inp.value.trim(); if (!t) return;
+    const p = +card.querySelector("[data-qpts]").value;
+    k.quests.push({id:uid(), t, p, done:false});
+    save(); renderAll();
+  }
+  else if (e.target.closest("[data-qdel]")){
+    const id = e.target.closest("[data-qdel]").dataset.qdel;
+    k.quests = k.quests.filter(q=>q.id!==id);
+    save(); renderAll();
+  }
+});
+document.getElementById("questArea").addEventListener("keydown", e=>{
+  if (e.key !== "Enter") return;
+  const inp = e.target.closest("[data-qnew]"); if (!inp) return;
+  const card = inp.closest("[data-kid]"), k = state.kids[card.dataset.kid];
+  const t = inp.value.trim(); if (!t) return;
+  const p = +card.querySelector("[data-qpts]").value;
+  k.quests.push({id:uid(), t, p, done:false});
+  save(); renderAll();
+});
+
+/* ---------- 위시리스트 ---------- */
+let wishFilter = "all";
+function renderWish(){
+  const ul = document.getElementById("wishList");
+  const all = state.wish || [];
+  const shown = wishFilter==="all" ? all : all.filter(w=>w.who===wishFilter);
+  document.getElementById("wishCount").textContent = `${all.filter(w=>!w.done).length}개 남음`;
+  if (!shown.length){ ul.innerHTML = `<div class="empty">갖고 싶은 것을 추가해 보세요 🛒</div>`; return; }
+  ul.innerHTML = shown.map(w=>`
+    <li class="wish ${w.done?"done":""}">
+      <input type="checkbox" data-w="${w.id}" ${w.done?"checked":""} aria-label="구매 완료">
+      <span class="body">
+        <span class="wt">${esc(w.t)}</span>
+        ${w.memo?`<div class="memo">${esc(w.memo)}</div>`:""}
+      </span>
+      <span class="who ${w.who==="라희"?"rahee":"raeun"}">${esc(w.who)}</span>
+      <button class="del-x" data-wdel="${w.id}" aria-label="삭제">✕</button>
+    </li>`).join("");
+}
+document.getElementById("wishFilters").addEventListener("click", e=>{
+  const b = e.target.closest(".chip"); if (!b) return;
+  wishFilter = b.dataset.f;
+  document.querySelectorAll("#wishFilters .chip").forEach(c=>c.classList.toggle("on", c===b));
+  renderWish();
+});
+document.getElementById("wishList").addEventListener("change", e=>{
+  const cb = e.target.closest("input[type=checkbox][data-w]"); if (!cb) return;
+  const w = (state.wish||[]).find(x=>x.id===cb.dataset.w); if (!w) return;
+  w.done = cb.checked; save(); renderWish();
+});
+document.getElementById("wishList").addEventListener("click", e=>{
+  const del = e.target.closest("[data-wdel]"); if (!del) return;
+  state.wish = (state.wish||[]).filter(x=>x.id!==del.dataset.wdel);
+  save(); renderWish();
+});
+document.getElementById("wishAdd").onclick = ()=>{
+  const t = document.getElementById("wishTitle").value.trim();
+  if (!t) return;
+  const who = document.getElementById("wishWho").value;
+  const memo = document.getElementById("wishMemo").value.trim();
+  (state.wish = state.wish || []).push({id:uid(), t, who, memo, done:false});
+  document.getElementById("wishTitle").value = "";
+  document.getElementById("wishMemo").value = "";
+  save(); renderAll();
+};
+document.getElementById("wishTitle").addEventListener("keydown", e=>{ if(e.key==="Enter") document.getElementById("wishAdd").click(); });
+document.getElementById("wishMemo").addEventListener("keydown", e=>{ if(e.key==="Enter") document.getElementById("wishAdd").click(); });
+
+/* ---------- 시계 ---------- */
+function tick(){
+  const n = bkkNow();
+  document.getElementById("clock").innerHTML =
+    `<small>${n.y}년 ${n.m}월 ${n.d}일 (${n.weekday})</small>${n.ampm} ${n.hh}:${n.mm}:${n.ss}`;
+  document.getElementById("sbClock").textContent = `${n.hh}:${n.mm}`;
+  document.getElementById("sbDate").textContent = `${n.y}년 ${n.m}월 ${n.d}일 ${n.weekday}요일 · 라라랜드 대시보드`;
+  renderStandby();
+}
+setInterval(tick, 1000);
+
+/* ---------- 대기화면 ---------- */
+function renderStandby(){
+  const sb = document.getElementById("standby");
+  if (sb.hidden) return;
+  document.getElementById("sbQuests").innerHTML = orderedKidKeys(state.kids).map(key=>{
+    const k = state.kids[key];
+    if (!k) return "";
+    const p = kidProgress(k);
+    const pct = p.total ? Math.round(p.done/p.total*100) : 0;
+    return `<div class="sb-row"><span>${esc(k.name)} <small style="color:#b9aede">Lv.${k.lv}</small></span><span class="b">${p.done}/${p.total}</span></div>
+            <div class="sb-bar"><i style="width:${pct}%"></i></div>`;
+  }).join("");
+  const up = [...state.dd].map(x=>({...x, ...{b:ddayBadge(x.date)}})).filter(x=>x.b.cls!=="after").sort((a,b)=>a.date.localeCompare(b.date)).slice(0,4);
+  document.getElementById("sbDdays").innerHTML = up.length
+    ? up.map(x=>`<div class="sb-row"><span>${esc(x.icon||"📌")} ${esc(x.title)}</span><span class="b">${x.b.label}</span></div>`).join("")
+    : `<div class="sb-row"><span>다가오는 일정이 없어요</span></div>`;
+}
+document.getElementById("standbyBtn").onclick = ()=>{
+  document.getElementById("standby").hidden = false; renderStandby();
+};
+document.getElementById("standbyExit").onclick = ()=>{ document.getElementById("standby").hidden = true; };
+document.getElementById("standby").addEventListener("click", e=>{
+  if (e.target.id === "standby") document.getElementById("standby").hidden = true;
+});
+
+/* ---------- 전체 초기화 ---------- */
+document.getElementById("resetAllBtn").onclick = ()=>{
+  if (!confirm("모든 기록(퀘스트·레벨·D-Day·위시리스트)을 처음 상태로 되돌릴까요?")) return;
+  state = DEFAULT_STATE();
+  save(); renderAll();
+};
+
+/* ---------- 렌더 ---------- */
+function renderAll(){ renderCal(); renderDday(); renderQuests(); renderWish(); tick(); }
+
+Sync.init();
+renderAll();
+</script>
+</body>
+</html>
